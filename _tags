@@ -2,4 +2,5 @@
 "web": -traverse
 true: thread
 true: debug
+true: package(sqlite3)
 false: verbose

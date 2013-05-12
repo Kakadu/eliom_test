@@ -1,28 +1,8 @@
 open Eliom_content.Html5.D
 open Eliom_parameter
 
-(* Services *)
-let main_service = Eliom_service.service ~path:[""] ~get_params:unit ()
-
-let user_service =
-  Eliom_service.service
-    ~path:["users"] ~get_params:(suffix (string "name")) ()
-
-let connection_service =
-  Eliom_service.post_service
-    ~fallback:main_service
-    ~post_params:(string "name" ** string "password")
-    ()
-
-let disconnection_service = Eliom_service.post_coservice' ~post_params:unit ()
-
-let new_user_form_service = Eliom_service.service ~path:["create account"] ~get_params:unit ()
-
-let account_confirmation_service =
-  Eliom_service.post_coservice ~fallback:new_user_form_service ~post_params:(string "name" ** string "password") ()
-
-
-
+open All_services
+open Db
 
 (* User names and passwords: *)
 let users = ref [("Calvin", "123"); ("Hobbes", "456")]
@@ -47,52 +27,25 @@ let disconnect_box () =
     (fun _ -> [fieldset
 		  [string_input
                       ~input_type:`Submit ~value:"Log out" ()]]) ()
-(*
-let connection_box () =
-  lwt u = Eliom_reference.get username in
-  lwt wp = Eliom_reference.get wrong_pwd in
-  Lwt.return
-    (match u with
-      | Some s -> div [p [pcdata "You are connected as "; pcdata s; ];
-                       disconnect_box () ]
-      | None ->
-        let l =
-          [post_form ~service:connection_service
-            (fun (name1, name2) ->
-              [fieldset
-		  [label ~a:[a_for name1] [pcdata "login: "];
-                   string_input ~input_type:`Text ~name:name1 ();
-                   br ();
-                   label ~a:[a_for name2] [pcdata "password: "];
-                   string_input ~input_type:`Password ~name:name2 ();
-                   br ();
-                   string_input ~input_type:`Submit ~value:"Connect" ()
-                 ]]) ();
-             p [a new_user_form_service [pcdata "Create an account"] ()]]
-        in
-        if wp
-        then div ((p [em [pcdata "Wrong user or password"]])::l)
-        else div l
-    )
-*)
+
 let create_account_form () =
   post_form ~service:account_confirmation_service
     (fun (name1, name2) ->
       [fieldset
-	  [label ~a:[a_for name1] [pcdata "login: "];
+	      [label ~a:[a_for name1] [pcdata "login: "];
            string_input ~input_type:`Text ~name:name1 ();
            br ();
            label ~a:[a_for name2] [pcdata "password: "];
            string_input ~input_type:`Password ~name:name2 ();
            br ();
            string_input ~input_type:`Submit ~value:"Connect" ()
-         ]]) ()
+          ]
+      ]) ()
 
 
 let page_head =
   head (title (pcdata ""))
-    [ css_link (uri_of_string (fun () -> "main.css")) ()
-    ; css_link ~uri:(make_uri (Eliom_service.static_dir ()) ["main.css"]) ()
+    [ css_link ~uri:(make_uri (Eliom_service.static_dir ()) ["main.css"]) ()
     ]
 
 (* Registration of services *)
@@ -109,7 +62,7 @@ let _ =
                 [ Header.search_bar
                 ; div ~a:[a_id "contentwrapper" ]
                   [ div ~a:[a_id "contentcolumn"; a_class ["innertube"]] (Userpage.page ~name) ]
-                ; Header.menu_bar ~home_service:main_service
+                ; Header.menu_bar ~home_service:main_service ~disconnection_service
                 ]
             ]
             | None ->
@@ -136,28 +89,25 @@ let _ =
     )
 
 let _ =
-  Eliom_registration.Any.register
+  Eliom_registration.Html5.register
     ~service:user_service
     (fun name () ->
       if List.exists (fun (n, _) -> n = name) !users
       then begin
-        (*lwt cf = connection_box () in*)
-        Eliom_registration.Html5.send
+        Lwt.return
           (html page_head
              (body [div
                [ Header.search_bar
-               ; div [ Header.menu_bar ~home_service:main_service
+               ; div [ Header.menu_bar ~home_service:main_service ~disconnection_service
                      ; div (Userpage.page ~name)
-                     (*; cf *)
-                   ]
+                     ]
                ]
               ]
              )
           )
       end
       else
-        Eliom_registration.Html5.send
-          ~code:404
+        Lwt.return
           (html page_head
              (body [h1 [pcdata "404"];
                     p [pcdata "That page does not exist"]]))
@@ -201,4 +151,13 @@ let _ =
                      p [a ~service:create_account_service [pcdata "Yes"] ();
                         pcdata " ";
                         a ~service:main_service [pcdata "No"] ()]
-                    ])))
+                    ])));
+
+  Eliom_registration.Html5.register ~service:search_service
+    (fun query () ->
+      Lwt.return
+        (html page_head
+           (body [h1 [pcdata "You have searched for "; pcdata query] ]
+           )
+        )
+    )

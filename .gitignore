@@ -17,3 +17,6 @@ _client
 _build
 ocsidb
 *.log
+# SQLite database
+users.db
+

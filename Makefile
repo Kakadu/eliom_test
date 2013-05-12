@@ -4,10 +4,10 @@ main_client := $(addprefix _client/, main.js)
 
 all: server client
 server:
-	$(ocamlbuild) $(main_server)
+	$(ocamlbuild) -use-ocamlfind $(main_server)
 
 client:
-	$(ocamlbuild) $(main_client)
+	$(ocamlbuild) -use-ocamlfind $(main_client)
 
 run:
 	ocsigenserver -c ocsigen.conf
