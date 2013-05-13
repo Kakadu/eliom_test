@@ -27,5 +27,5 @@ let new_user_form_service = Eliom_service.service ~path:["create account"] ~get_
 let account_confirmation_service =
   Eliom_service.post_coservice ~fallback:new_user_form_service ~post_params:(string "name" ** string "password") ()
 
-let search_service = Eliom_service.service ~path:["search"]
-  ~get_params:(string "query") ()
+let search_service = Eliom_service.service ~path:["search"] ~get_params:(string "query") ()
+let create_db_service = Eliom_service.service ~path:["create"] ~get_params:unit ()

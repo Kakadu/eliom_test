@@ -1,6 +1,7 @@
 "_local": -traverse
 "web": -traverse
-true: thread
 true: debug
-true: package(sqlite3)
+true: thread, syntax(camlp4o)
+true: pkg_eliom.server, pkg_pgocaml, pkg_macaque.syntax
 false: verbose
+#"_server/*.cma": -

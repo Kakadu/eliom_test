@@ -2,8 +2,8 @@ open Eliom_content.Html5.D
 open Eliom_parameter
 
 open All_services
-open Db
-
+open Db_user
+(*
 (* User names and passwords: *)
 let users = ref [("Calvin", "123"); ("Hobbes", "456")]
 
@@ -11,12 +11,11 @@ let user_links () =
   ul (List.map (fun (name, _) -> li [a ~service:user_service [pcdata name] name]) !users)
 
 let check_pwd name pwd = try List.assoc name !users = pwd with Not_found -> false
-
+  *)
 
 
 (* Eliom references *)
 let username = Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
-
 let wrong_pwd = Eliom_reference.eref ~scope:Eliom_common.request_scope false
 
 
@@ -92,7 +91,7 @@ let _ =
   Eliom_registration.Html5.register
     ~service:user_service
     (fun name () ->
-      if List.exists (fun (n, _) -> n = name) !users
+      if Db_user.user_exists_by_nick name
       then begin
         Lwt.return
           (html page_head
@@ -116,7 +115,8 @@ let _ =
   Eliom_registration.Action.register
     ~service:connection_service
     (fun () (name, password) ->
-      if check_pwd name password
+      print_endline "here";
+      if Db_user.check_password name password
       then Eliom_reference.set username (Some name)
       else Eliom_reference.set wrong_pwd true);
 
@@ -135,19 +135,19 @@ let _ =
 
   Eliom_registration.Html5.register
     ~service:account_confirmation_service
-    (fun () (name, pwd) ->
+    (fun () (nick, password) ->
       let create_account_service =
         Eliom_registration.Action.register_coservice
           ~fallback:main_service
           ~get_params:Eliom_parameter.unit
           ~timeout:60.
           (fun () () ->
-            users := (name, pwd)::!users;
-            Lwt.return ())
+            Db_user.add_user ~nick ~password ~email:nick ()
+          )
       in
       Lwt.return
         (html page_head
-           (body [h1 [pcdata "Confirm account creation for "; pcdata name];
+           (body [h1 [pcdata "Confirm account creation for "; pcdata nick];
                      p [a ~service:create_account_service [pcdata "Yes"] ();
                         pcdata " ";
                         a ~service:main_service [pcdata "No"] ()]
@@ -161,3 +161,12 @@ let _ =
            )
         )
     )
+
+let _ =
+  Eliom_registration.Html5.register ~service:create_db_service
+    (fun () () ->
+      Lwt.return
+        Eliom_content.Html5.D.(html
+                   (head (title(pcdata "DB creation")) [])
+                   (body [p [ pcdata "do nothing";
+                            ]])))

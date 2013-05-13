@@ -19,4 +19,5 @@ ocsidb
 *.log
 # SQLite database
 users.db
-
+#vim swap files
+*.swp
