@@ -22,6 +22,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 module Option = Eliom_lib.Option
 
 let (>>=) = Lwt.(>>=)
+let (>|=) = Lwt.(>|=)
 
 type password = Bcrypt.hash_t
 (*
@@ -33,11 +34,11 @@ let users_id_seq = (<:sequence< serial "users_id_seq" >>)
 let users = (<:table< users (
   id              integer NOT NULL DEFAULT(nextval $users_id_seq$),
   nick            text NOT NULL,
-  friends         integer[] not null,
-  post_ids        integer[] not null,
-  email           text      not null,
-  password_digest text      not null,
-  exp             integer   not null
+  friends         int32_array NOT NULL,      (* line 36 *)
+  post_ids        int32_array NOT NULL,
+  email           text      NOT NULL,
+  password_digest text      NOT NULL,
+  exp             integer   NOT NULL
 ) >>)
 
 let get_user_id_with_name name =
@@ -45,29 +46,29 @@ let get_user_id_with_name name =
     (<:view< {
       u.id
      } | u in $users$;
-    u.name = $string:name$;
+    u.nick = $string:name$;
     >>)
 
 let get_user_name_and_email_with_id id =
   Db.view_one
     (<:view< {
-      u.name;
+      u.nick;
       u.email;
      } | u in $users$;
     u.id = $int32:id$;
     >>)
-
+(*
 let get_user_with_name name =
   Db.view_opt
     (<:view< {
       u.id;
-      u.name;
-      u.password;
+      u.nick;
+      u.password_digest;
       u.email;
       u.is_admin;
       u.feeds_per_page;
      } | u in $users$;
-    u.name = $string:name$;
+    u.nick = $string:name$;
     >>)
   >>= fun user ->
   Lwt.return
@@ -84,7 +85,7 @@ let get_user_with_name name =
        )
        user
     )
-
+*)
 let user_exists_by_nick nick =
   Db.view_opt
     (<:view< {
@@ -94,20 +95,19 @@ let user_exists_by_nick nick =
     u.nick = $string:nick$;
     >>)
   >>= fun user ->
-  Lwt.return (function Some _ -> true | None -> false)
+  Lwt.return (match user with Some _ -> true | None -> false)
 
 let check_password nick (password: string) =
   Db.view_opt
     (<:view< {
       u.id;
-      u.password
+      u.password_digest;
       u.nick;
      } | u in $users$;
     u.nick = $string:nick$;
-    u.password = $string:password$
+    u.password_digest = $string:password$
     >>)
-  >>= fun user ->
-  Lwt.return (function Some _ -> true | None -> false)
+  >|= (function Some _ -> true | None -> false)
 
 
 
@@ -119,10 +119,10 @@ let add_user ~nick ~password ~email () =
       friends  = $int32_array:[| |]$;
       post_ids = $int32_array:[| |]$;
       email = $string:email$;
-      password = $string:Bcrypt.string_of_hash password$;
-      exp = $int:0$;
+      password_digest = $string:password$;
+      exp = $int32:0l$;
     } >>)
-
+(*
 let update_user_password ~userid ~password () =
   Db.query
     (<:update< u in $users$ := {
@@ -140,3 +140,4 @@ let update_user_feeds_per_page ~userid ~nb_feeds () =
     (<:update< u in $users$ := {
       feeds_per_page = $int32:nb_feeds$;
     } | u.id = $int32:userid$; >>)
+*)

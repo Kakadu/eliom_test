@@ -1,8 +1,9 @@
 "_local": -traverse
 "web": -traverse
 true: debug
-true: thread, package(threads), threads, syntax(camlp4o)
-true: pkg_eliom.server, pkg_pgocaml, pkg_macaque.syntax, pkg_thread
+"*.depends": syntax(camlp4o)
+"*.ml": syntax(camlp4o)
+true: syntax(camlp4o), syntax_camlp4o
+true: pkg_safepass
+true: pkg_eliom.server, pkg_pgocaml, pkg_macaque.syntax, pkg_threads, pkg_lwt.syntax
 false: verbose
-"_server/*.cma": thread
-"*.cma": thread

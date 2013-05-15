@@ -20,7 +20,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *)
 
 type password
-
+(*
 val to_password : string -> password
 
 val get_user_name_and_email_with_id :
@@ -42,9 +42,9 @@ val get_user_with_name :
 val get_user_id_with_name :
   string ->
   < id : (Sql.int32_t, Sql.non_nullable) Db.t > Lwt.t
-
-val user_exists_by_nick: string -> bool
-val check_password: string -> string -> bool
+  *)
+val user_exists_by_nick: string -> bool Lwt.t
+val check_password: string -> string -> bool Lwt.t
 
 val add_user :
   nick:string ->
@@ -52,7 +52,7 @@ val add_user :
   email:string ->
   unit ->
   unit Lwt.t
-
+(*
 val update_user_password :
   userid:int32 ->
   password:password ->
@@ -70,3 +70,4 @@ val update_user_feeds_per_page :
   nb_feeds:int32 ->
   unit ->
   unit Lwt.t
+*)

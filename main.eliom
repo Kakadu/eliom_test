@@ -91,7 +91,8 @@ let _ =
   Eliom_registration.Html5.register
     ~service:user_service
     (fun name () ->
-      if Db_user.user_exists_by_nick name
+      lwt is_known = Db_user.user_exists_by_nick name in
+      if is_known
       then begin
         Lwt.return
           (html page_head
@@ -116,7 +117,8 @@ let _ =
     ~service:connection_service
     (fun () (name, password) ->
       print_endline "here";
-      if Db_user.check_password name password
+      lwt okay = Db_user.check_password name password in
+      if okay
       then Eliom_reference.set username (Some name)
       else Eliom_reference.set wrong_pwd true);
 
