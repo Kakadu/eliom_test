@@ -38,10 +38,11 @@ type ('a, 'b) t = ('a, 'b) macaque_type Sql.t
 
 let connect () =
   Lwt_PGOCaml.connect
-    ~database:"cumulus"
+    ~database:"traktor"
     ~host:"localhost"
-    ~password:"mdp"
-    ~user:"cumulus"
+    ~password:"123"
+    ~user:"kakadu"
+    ~port:5434
     ()
 
 let validate db =
@@ -50,7 +51,7 @@ let validate db =
     (fun () -> Lwt.return true)
     (fun _ -> Lwt.return false)
 
-let pool = Lwt_pool.create 16 ~validate connect
+let pool: unit Lwt_PGOCaml.t Lwt_pool.t = Lwt_pool.create 16 ~validate connect
 
 let rec in' value = function
   | [] -> (<:value< false >>)
@@ -59,7 +60,9 @@ let rec in' value = function
 let exec f x = Lwt_pool.use pool (fun db -> f db x)
 
 let view x = exec (fun db x -> Lwt_Query.view db x) x
-let view_opt x = exec (fun db x -> Lwt_Query.view_opt db x) x
+let view_opt x =
+  print_endline "inside view_opt";
+  exec (fun db x -> Lwt_Query.view_opt db x) x
 let view_one x = exec (fun db x -> Lwt_Query.view_one db x) x
 let query x = exec (fun db x -> Lwt_Query.query db x) x
 let value x = exec (fun db x -> Lwt_Query.value db x) x

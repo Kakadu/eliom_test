@@ -116,11 +116,21 @@ let _ =
   Eliom_registration.Action.register
     ~service:connection_service
     (fun () (name, password) ->
-      print_endline "here";
-      lwt okay = Db_user.check_password name password in
-      if okay
-      then Eliom_reference.set username (Some name)
-      else Eliom_reference.set wrong_pwd true);
+      try
+        print_endline "going to execute check_password";
+        lwt okay = Db_user.check_password name password in
+        print_endline "checking result of okay";
+        if okay
+        then Eliom_reference.set username (Some name)
+        else Eliom_reference.set wrong_pwd true
+      with
+(*        | (Unix.Unix_error(Unix.ECONNREFUSED, "connect", "")) as exn -> *)
+        | exn ->
+            print_endline "Exception raised!";
+            print_endline (Printexc.to_string exn);
+            flush stdout;
+            raise exn
+    );
 
   Eliom_registration.Action.register
     ~service:disconnection_service

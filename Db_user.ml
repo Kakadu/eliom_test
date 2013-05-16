@@ -1,24 +1,4 @@
-(*
-Copyright (c) 2012 Enguerrand Decorne
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*)
-
+open Printf
 module Option = Eliom_lib.Option
 
 let (>>=) = Lwt.(>>=)
@@ -29,12 +9,13 @@ type password = Bcrypt.hash_t
 let to_password x = Bcrypt.hash x
 let check_password = Bcrypt.verify
   *)
+
 let users_id_seq = (<:sequence< serial "users_id_seq" >>)
 
 let users = (<:table< users (
   id              integer NOT NULL DEFAULT(nextval $users_id_seq$),
   nick            text NOT NULL,
-  friends         int32_array NOT NULL,      (* line 36 *)
+  friends         int32_array NOT NULL,
   post_ids        int32_array NOT NULL,
   email           text      NOT NULL,
   password_digest text      NOT NULL,
@@ -57,16 +38,14 @@ let get_user_name_and_email_with_id id =
      } | u in $users$;
     u.id = $int32:id$;
     >>)
-(*
-let get_user_with_name name =
+
+let get_user_by_name name =
   Db.view_opt
     (<:view< {
       u.id;
       u.nick;
       u.password_digest;
       u.email;
-      u.is_admin;
-      u.feeds_per_page;
      } | u in $users$;
     u.nick = $string:name$;
     >>)
@@ -76,16 +55,13 @@ let get_user_with_name name =
        (fun x ->
         object
           method id = x#id;
-          method name = x#name;
-          method password = Bcrypt.hash_of_string x#!password
-          method email = x#email;
-          method is_admin = x#is_admin;
-          method feeds_per_page = x#feeds_per_page;
+          method name = x#nick;
+          method password = x#password_digest;
         end
        )
        user
     )
-*)
+
 let user_exists_by_nick nick =
   Db.view_opt
     (<:view< {
@@ -98,9 +74,9 @@ let user_exists_by_nick nick =
   Lwt.return (match user with Some _ -> true | None -> false)
 
 let check_password nick (password: string) =
+  print_endline "inside check_password";
   Db.view_opt
     (<:view< {
-      u.id;
       u.password_digest;
       u.nick;
      } | u in $users$;
@@ -109,12 +85,10 @@ let check_password nick (password: string) =
     >>)
   >|= (function Some _ -> true | None -> false)
 
-
-
 let add_user ~nick ~password ~email () =
   Db.query
     (<:insert< $users$ := {
-      id = users?id;
+      id = nextval $users_id_seq$;
       nick = $string:nick$;
       friends  = $int32_array:[| |]$;
       post_ids = $int32_array:[| |]$;
