@@ -10,10 +10,10 @@ let to_password x = Bcrypt.hash x
 let check_password = Bcrypt.verify
   *)
 
-let users_id_seq = (<:sequence< serial "users_id_seq" >>)
+let users_id_seq = (<:sequence< bigserial "users_id_seq" >>)
 
 let users = (<:table< users (
-  id              integer NOT NULL DEFAULT(nextval $users_id_seq$),
+  id              bigint NOT NULL DEFAULT(nextval $users_id_seq$),
   nick            text NOT NULL,
   friends         int32_array NOT NULL,
   post_ids        int32_array NOT NULL,
@@ -36,7 +36,7 @@ let get_user_name_and_email_with_id id =
       u.nick;
       u.email;
      } | u in $users$;
-    u.id = $int32:id$;
+    u.id = $int64:id$;
     >>)
 
 let get_user_by_name name =

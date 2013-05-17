@@ -51,7 +51,7 @@ let validate db =
     (fun () -> Lwt.return true)
     (fun _ -> Lwt.return false)
 
-let pool: unit Lwt_PGOCaml.t Lwt_pool.t = Lwt_pool.create 16 ~validate connect
+let pool: unit Lwt_PGOCaml.t Lwt_pool.t = Lwt_pool.create 1 ~validate connect
 
 let rec in' value = function
   | [] -> (<:value< false >>)
