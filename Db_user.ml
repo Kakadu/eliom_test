@@ -15,8 +15,6 @@ let users_id_seq = (<:sequence< bigserial "users_id_seq" >>)
 let users = (<:table< users (
   id              bigint NOT NULL DEFAULT(nextval $users_id_seq$),
   nick            text NOT NULL,
-  friends         int32_array NOT NULL,
-  post_ids        int32_array NOT NULL,
   email           text      NOT NULL,
   password_digest text      NOT NULL,
   exp             integer   NOT NULL
@@ -74,7 +72,6 @@ let user_exists_by_nick nick =
   Lwt.return (match user with Some _ -> true | None -> false)
 
 let check_password nick (password: string) =
-  print_endline "inside check_password";
   Db.view_opt
     (<:view< {
       u.password_digest;
@@ -90,8 +87,6 @@ let add_user ~nick ~password ~email () =
     (<:insert< $users$ := {
       id = nextval $users_id_seq$;
       nick = $string:nick$;
-      friends  = $int32_array:[| |]$;
-      post_ids = $int32_array:[| |]$;
       email = $string:email$;
       password_digest = $string:password$;
       exp = $int32:0l$;

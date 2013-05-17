@@ -23,9 +23,9 @@ let search_bar =
 
 let menu_bar ~home_service ~disconnection_service =
   div ~a:[a_id "leftcolumn"; a_class ["innertube"]]
-    [ a ~a:[a_class ["menubutton"]] ~service:home_service          [pcdata "Home"] ()
+    [ a   ~a:[a_class ["menubutton"]] ~service:home_service      [pcdata "Home"] (); br ()
 (*    ; a ~a:[a_class ["menubutton"]] ~service:disconnection_service [pcdata "Logout"] () *)
-    ; div ~a:[a_class ["menubutton"]] [pcdata "Friends"]
+    ; a   ~a:[a_class ["menubutton"]] ~service:myfriends_service [pcdata "My Friends"] ()
     ; div ~a:[a_class ["menubutton"]] [pcdata "Get new skills"]
     ; div ~a:[a_class ["menubutton"]] [pcdata "Devices"]
     ; div ~a:[a_class ["menubutton"]] [pcdata "Settings"]

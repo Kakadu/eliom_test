@@ -1,8 +1,8 @@
-insert into users values
-  (1,'Kakadu',     'kakadu@kakadu.net',     '123',0),
-  (2,'Lerss',      'lerss@kakadu.net',      '123',0),
-  (3,'Ckau',       'ckau@kakadu.net',       '123',0),
-  (4,'Differentia','differentia@kakadu.net','123',0)
+insert into users (id,nick,email,password_digest,exp) values
+  (DEFAULT,'Kakadu',     'kakadu@kakadu.net',     '123',0),
+  (DEFAULT,'Lerss',      'lerss@kakadu.net',      '123',0),
+  (DEFAULT,'Ckau',       'ckau@kakadu.net',       '123',0),
+  (DEFAULT,'Differentia','differentia@kakadu.net','123',0)
 ;
 
 insert into friends values

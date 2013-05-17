@@ -14,6 +14,8 @@ let user_service =
   Eliom_service.service
     ~path:["users"] ~get_params:(suffix (string "name")) ()
 
+let myfriends_service = Eliom_service.service ~path:["myfriends"] ~get_params:unit ()
+
 let connection_service =
   Eliom_service.post_service
     ~fallback:main_service
