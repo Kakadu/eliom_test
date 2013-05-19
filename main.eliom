@@ -3,9 +3,17 @@ open Eliom_parameter
 
 open All_services
 open Db_user
+open Printf
+open Eliom_lib
+open Core
+open Core.Std
+open Lwt
+
+external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
 
 (* Eliom references *)
-let username = Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
+let username  = Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
+let userid    = Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
 let wrong_pwd = Eliom_reference.eref ~scope:Eliom_common.request_scope false
 
 (* Page widgets: *)
@@ -54,9 +62,11 @@ let _ =
     (fun () () ->
       lwt u = Eliom_reference.get username in
       lwt wp = Eliom_reference.get wrong_pwd in
-      Lwt.return
+      lwt id = Eliom_reference.get userid in
         (match u with
-            | Some name -> wrap_main_page (Userpage.page ~name)
+            | Some name ->
+                Userpage.page ~name ~id:(Option.value_exn id) >|= wrap_main_page
+
             | None ->
                 let l : _ list =
                   [post_form ~service:connection_service
@@ -77,49 +87,59 @@ let _ =
                                    then [div ((p [em [pcdata "Wrong user or password"]])::l)]
                                    else [div l]
                                   )
-                )
+                ) |> Lwt.return
         )
     )
 
 let _ =
   Eliom_registration.Html5.register ~service:myfriends_service (fun () () ->
-    Lwt.return (wrap_main_page
-                  [div [div [pcdata "friends will be listed here"]]]
-    )
+    lwt name = Eliom_reference.get username in
+    lwt id = Eliom_reference.get userid in
+    let name = Option.value_exn name in
+    let id   = Option.value_exn id in
+    lwt friends_ids = Db_user.get_friends_by_id id in
+    Lwt.return
+      (wrap_main_page
+         [div [div [pcdata (sprintf "friends of user %s(%s) will be listed here" name (Int64.to_string id))]
+              ;br ()
+              ;div [pcdata "friends are:"]
+              ;div [pcdata (Core_list.to_string  ~f:Int64.to_string friends_ids)]
+              ]
+         ]
+      )
   )
 
 (* Show information about concrete user *)
 let _ =
   Eliom_registration.Html5.register ~service:user_service
     (fun name () ->
-      lwt is_known = Db_user.user_exists_by_nick name in
-      if is_known
-      then begin
-        Lwt.return
-          (wrap_main_page [div (Userpage.page ~name)])
-      end
-      else
-        Lwt.return
-          (html page_head
-             (body [h1 [pcdata "404"];
-                    p [pcdata "That page does not exist"]]))
+      (* TODO: это быдлокод *)
+      lwt is_known = Db_user.get_user_by_name name in
+      (match is_known with
+        | Some o -> Userpage.page ~name:o#nick ~id:o#id >|= fun page -> wrap_main_page [div page]
+        | None   ->
+            Lwt.return
+              (html page_head
+                 (body [h1 [pcdata "404"];
+                        p [pcdata "That page does not exist"]]))
+      )
     );
 
   Eliom_registration.Action.register
     ~service:connection_service
     (fun () (name, password) ->
       try
-        print_endline "going to execute check_password";
         lwt okay = Db_user.check_password name password in
-        print_endline "checking result of okay";
-        if okay
-        then Eliom_reference.set username (Some name)
-        else Eliom_reference.set wrong_pwd true
+        (match okay with
+          | Some id ->
+              let _ = Eliom_reference.set username (Some name) in
+              Eliom_reference.set userid   (Some id)
+          | None -> Eliom_reference.set wrong_pwd true
+        )
       with
-(*        | (Unix.Unix_error(Unix.ECONNREFUSED, "connect", "")) as exn -> *)
         | exn ->
             print_endline "Exception raised!";
-            print_endline (Printexc.to_string exn);
+            print_endline (Exn.to_string exn);
             flush stdout;
             raise exn
     );
@@ -140,6 +160,7 @@ let _ =
   Eliom_registration.Html5.register
     ~service:account_confirmation_service
     (fun () (nick, password) ->
+      (* TODO: check if new user nick is already exists in database *)
       let create_account_service =
         Eliom_registration.Action.register_coservice
           ~fallback:main_service
@@ -174,3 +195,12 @@ let _ =
                    (head (title(pcdata "DB creation")) [])
                    (body [p [ pcdata "do nothing";
                             ]])))
+
+let _ =
+  Eliom_registration.Action.register ~service:append_feed (fun () (text,exp) ->
+    print_endline ("appending feed: "^ text);
+    lwt id = Eliom_reference.get userid in
+    let userid = Option.value_exn id in
+    let exp = match Int32.of_int exp with Some x -> x | None  -> 1l in
+    Db_user.add_post ~userid ~text ~material_id:Int64.one ~exp
+  )

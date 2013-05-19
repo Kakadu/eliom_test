@@ -26,7 +26,7 @@ create table posts (
     material_id         integer NOT NULL,
     exp                 integer NOT NULL,
     comments            text,
-    date_of_creation    date
+    date_of_creation    timestamp
 );
 
 drop table if exists materials;
@@ -52,11 +52,16 @@ create table users_skills (
 );
 
 drop table if exists skills;
-create table skills (
+CREATE TABLE skills (
     id              BIGSERIAL NOT NULL PRIMARY KEY,
     descr           text,
-    parent_id       integer NOT NULL,
     maxexp          integer NOT NULL
+);
+
+DROP TABLE IF EXISTS parent_skills;
+CREATE TABLE parent_skills (
+    child_id        BIGINT NOT NULL,
+    parent_id       BIGINT
 );
 
 drop table if exists material_sorts;

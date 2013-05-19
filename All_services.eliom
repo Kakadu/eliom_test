@@ -31,3 +31,11 @@ let account_confirmation_service =
 
 let search_service = Eliom_service.service ~path:["search"] ~get_params:(string "query") ()
 let create_db_service = Eliom_service.service ~path:["create"] ~get_params:unit ()
+
+let append_feed =
+  Eliom_service.post_coservice'
+    ~post_params: Eliom_parameter.((string "text") ** (int "exp") )
+                                      (* **
+                                      (string "desc") **
+                                      (string "tags") ) *)
+    ()

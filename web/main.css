@@ -1,8 +1,8 @@
 
-body{
-margin:0;
-padding:0;
-line-height: 1.5em;
+body {
+    margin:0;
+    padding:0;
+    line-height: 1.5em;
 }
 
 b{font-size: 110%;}
@@ -10,18 +10,18 @@ em{color: red;}
 
 
 #topsection{
-background: #EAEAEA;
-height: 90px; /*Height of top section*/
+    background: #EAEAEA;
+    height: 90px; /*Height of top section*/
 }
 
 #topsection h1{
-margin: 0;
-padding-top: 15px;
+    margin: 0;
+    padding-top: 15px;
 }
 
 #contentwrapper{
-float: left;
-width: 100%;
+    float: left;
+    width: 100%;
 }
 
 #contentcolumn{
@@ -29,10 +29,10 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 }
 
 #leftcolumn{
-float: left;
-width: 200px; /*Width of left column*/
-margin-left: -100%;
-background: #C8FC98;
+    float: left;
+    width: 200px; /*Width of left column*/
+    margin-left: -100%;
+    background: #C8FC98;
 }
 
 .menubutton {
@@ -40,12 +40,32 @@ background: #C8FC98;
 }
 
 .innertube{
-margin: 10px; /*Margins for inner DIV inside each column (to provide padding)*/
-margin-top: 0;
+    margin: 10px; /*Margins for inner DIV inside each column (to provide padding)*/
+    margin-top: 0;
 }
 
 .svg_logo {
     float: left;
-  width: 120px;
-  height: 40px;
+    width: 120px;
+    height: 40px;
+}
+
+.inl-b {
+    display: inline-block;
+}
+.al-l {
+    float: left;
+}
+
+.al-r {
+    float: right;
+}
+.post-date-placeholder {
+    width: 180px;
+}
+.post-comment-placeholder {
+    width: 400px;
+}
+.post-exp-placeholder {
+    width: 20px;
 }

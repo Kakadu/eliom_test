@@ -19,8 +19,8 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *)
 
-type password
 (*
+type password
 val to_password : string -> password
 
 val get_user_name_and_email_with_id :
@@ -43,8 +43,12 @@ val get_user_id_with_name :
   string ->
   < id : (Sql.int32_t, Sql.non_nullable) Db.t > Lwt.t
   *)
+val get_user_by_name: string -> < id: int64; nick:string; password: string > option Lwt.t
 val user_exists_by_nick: string -> bool Lwt.t
-val check_password: string -> string -> bool Lwt.t
+val check_password: string -> string -> int64 option Lwt.t
+val check_password_bool: string -> string -> bool Lwt.t
+
+val get_friends_by_id: int64 -> int64 list Lwt.t
 
 val add_user :
   nick:string ->
@@ -71,3 +75,8 @@ val update_user_feeds_per_page :
   unit ->
   unit Lwt.t
 *)
+val select_posts_of_user: int64 ->
+  < comments : string; date_of_creation : Sql_base.timestamp; exp : int32; id : int64; material_id : int64 >
+         Core.Core_list.t Lwt.t
+
+val add_post: userid:int64 -> text: string -> exp:int32 -> material_id:int64 -> unit Lwt.t

@@ -1,7 +1,7 @@
 "_local": -traverse
 "web": -traverse
 true: debug
-true: syntax_camlp4o
-true: pkg_safepass
+true: syntax_camlp4o, pkg_core
+#true: pkg_safepass
 true: pkg_eliom.server, pkg_pgocaml, pkg_macaque, pkg_macaque.syntax, pkg_threads, pkg_lwt.syntax
 false: verbose
