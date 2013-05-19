@@ -201,6 +201,6 @@ let _ =
     print_endline ("appending feed: "^ text);
     lwt id = Eliom_reference.get userid in
     let userid = Option.value_exn id in
-    let exp = match Int32.of_int exp with Some x -> x | None  -> 1l in
+(*    let exp = match Int32.of_int exp with Some x -> x | None  -> 1l in *)
     Db_user.add_post ~userid ~text ~material_id:Int64.one ~exp
   )

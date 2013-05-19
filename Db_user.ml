@@ -137,7 +137,7 @@ let get_post_by_id id : _ Lwt.t =
 
 
 let select_posts_of_user id : _ list Lwt.t =
-  Db.view <:view< x | x in $posts$; x.user_id = $int64:id$ >>
+  Db.view <:view< x order by x.date_of_creation desc | x in $posts$; x.user_id = $int64:id$ >>
   >|= (Core_list.map ~f:(fun x ->
                          object
                            method id          = x#!id

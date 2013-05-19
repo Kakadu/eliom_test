@@ -34,7 +34,7 @@ let create_db_service = Eliom_service.service ~path:["create"] ~get_params:unit 
 
 let append_feed =
   Eliom_service.post_coservice'
-    ~post_params: Eliom_parameter.((string "text") ** (int "exp") )
+    ~post_params: Eliom_parameter.((string "text") ** (int32 "exp") )
                                       (* **
                                       (string "desc") **
                                       (string "tags") ) *)
