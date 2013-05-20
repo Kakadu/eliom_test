@@ -94,7 +94,7 @@ let authenticated_handler ok bad =
 let _ =
   let friend_content o =
     div
-      [ div ~a:[a_class ["user-id-placeholder"; "inl-b"; "al-l"; "fl-l"]]          [pcdata (Int64.to_string o#id)]
+      [ div ~a:[a_class ["user-id-placeholder"; "inl-b"; "al-l"; "fl-l"]] [pcdata (Int64.to_string o#id)]
       ; div ~a:[a_class ["user-nick-placeholder"; "inl-b"]]
         [ a ~service:user_service [pcdata o#nick] o#nick
         ]
@@ -198,15 +198,6 @@ let _ =
            )
         )
     )
-
-let _ =
-  Eliom_registration.Html5.register ~service:create_db_service
-    (fun () () ->
-      Lwt.return
-        Eliom_content.Html5.D.(html
-                   (head (title(pcdata "DB creation")) [])
-                   (body [p [ pcdata "do nothing";
-                            ]])))
 
 let _ =
   Eliom_registration.Action.register ~service:append_feed (fun () (text,exp) ->
