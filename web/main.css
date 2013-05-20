@@ -69,3 +69,12 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 .post-exp-placeholder {
     width: 20px;
 }
+.user-id-placeholder {
+    width: 20px;
+}
+.user-nick-placeholder {
+    width: 400px;
+}
+.user-exp-placeholder {
+    width: 20px;
+}

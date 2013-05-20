@@ -65,8 +65,14 @@ let get_friends_by_id id : int64 list Lwt.t =
 (* TODO: make select * from users  JOIN friends ON (users.id=friends.user_id);
     somehow *)
 
-let foo id =
-  Db.view
+let friends_of_user_by_id ~id : _ Lwt.t =
+  Db.view (<:view< x (*order by exp desc*)
+              | x in $users$; y in $friends$; y.user_id = $int64:id$; x.id = y.friend_id >>)
+  >|= (Core_list.map ~f:(fun o -> object
+    method id = o#!id
+    method nick = o#!nick
+    method exp = o#!exp
+  end))
 
 let user_exists_by_nick nick =
   Db.view_opt

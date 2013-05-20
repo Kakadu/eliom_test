@@ -49,6 +49,7 @@ val check_password: string -> string -> int64 option Lwt.t
 val check_password_bool: string -> string -> bool Lwt.t
 
 val get_friends_by_id: int64 -> int64 list Lwt.t
+val friends_of_user_by_id: id:int64 -> < exp : int32; id : int64; nick : string > list Lwt.t
 
 val add_user :
   nick:string ->
