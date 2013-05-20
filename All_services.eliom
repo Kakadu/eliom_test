@@ -38,3 +38,11 @@ let append_feed =
                                       (string "desc") **
                                       (string "tags") ) *)
     ()
+
+(* Eliom session data *)
+let user_n_id: (string*int64) option Eliom_reference.eref =
+  Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
+let wrong_pwd = Eliom_reference.eref ~scope:Eliom_common.request_scope false
+
+let authenticated_handler ok bad =
+  Eliom_tools.wrap_handler (fun () -> Eliom_reference.get user_n_id) bad ok

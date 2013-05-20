@@ -61,13 +61,14 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
     float: right;
 }
 .post-date-placeholder {
-    width: 180px;
+    width: 200px;
 }
 .post-comment-placeholder {
     width: 400px;
 }
 .post-exp-placeholder {
-    width: 20px;
+    width: 80px;
+    text-align: right;
 }
 .user-id-placeholder {
     width: 20px;
@@ -77,4 +78,14 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 }
 .user-exp-placeholder {
     width: 20px;
+}
+
+.user-avatar {
+    width: 140px;
+    float: left;
+}
+.user-text-info-container {
+    display: inline-block;
+    margin-left: 5px;
+    width: 600px;
 }

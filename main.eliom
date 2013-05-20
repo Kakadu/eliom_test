@@ -11,10 +11,6 @@ open Lwt
 
 external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
 
-(* Eliom references *)
-let user_n_id = Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
-let wrong_pwd = Eliom_reference.eref ~scope:Eliom_common.request_scope false
-
 (* Page widgets: *)
 let disconnect_box () =
   post_form disconnection_service
@@ -63,7 +59,7 @@ let _ =
       lwt user_n_id = Eliom_reference.get user_n_id in
       (match user_n_id with
         | Some (name,id) ->
-            Userpage.page ~name ~id:id >|= wrap_main_page
+            Userpage.page ~cur_user_id:id ~name ~id >|= wrap_main_page
         | None ->
                 let l : _ list =
                   [post_form ~service:connection_service
@@ -87,9 +83,6 @@ let _ =
                 ) |> Lwt.return
         )
     )
-
-let authenticated_handler ok bad =
-  Eliom_tools.wrap_handler (fun () -> Eliom_reference.get user_n_id) bad ok
 
 let _ =
   let friend_content o =
@@ -125,20 +118,24 @@ let _ =
 
 (* Show information about concrete user *)
 let _ =
-  Eliom_registration.Html5.register ~service:user_service
-    (fun name () ->
-      (* TODO: это быдлокод *)
-      lwt is_known = Db_user.get_user_by_name name in
-      (match is_known with
-        | Some o -> Userpage.page ~name:o#nick ~id:o#id >|= fun page -> wrap_main_page [div page]
-        | None   ->
-            Lwt.return
-              (html page_head
-                 (body [h1 [pcdata "404"];
-                        p [pcdata "That page does not exist"]]))
-      )
-    );
+  Eliom_registration.Any.register ~service:user_service (fun name () ->
+    Db_user.get_user_by_name name >>= fun is_known ->
+    match is_known with
+      | Some o ->
+          let on_logged_in (_,cur_user_id) =
+            Userpage.page ~cur_user_id ~name:o#nick ~id:o#id >|= fun page ->
+              wrap_main_page [div page]
+          in
+          authenticated_handler (fun info () () -> on_logged_in info >>= Eliom_registration.Html5.send )
+            (fun _ () -> Eliom_registration.Redirection.send main_service) () ()
+      | None   ->
+          Eliom_registration.Html5.send
+            (html page_head
+               (body [h1 [pcdata "404"];
+                      p [pcdata "That page does not exist"]]))
+    )
 
+let _ =
   Eliom_registration.Action.register
     ~service:connection_service
     (fun () (nick, password) ->
