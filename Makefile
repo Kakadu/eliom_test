@@ -1,13 +1,15 @@
-ocamlbuild := ocamlbuild -use-ocamlfind -classic-display
-main_server := $(addprefix _server/, main.cma)
-main_client := $(addprefix _client/, main.js)
+ocamlbuild := ocamlbuild -use-ocamlfind -classic-display -j 1
+main_server := $(addprefix _server/, server.cma server.cmxs)
+main_client := $(addprefix _client/, client.js)
 
-all: server client
+all: 
+	$(ocamlbuild) $(main_server) $(main_client)
+
 server:
-	$(ocamlbuild) -use-ocamlfind $(main_server)
+	$(ocamlbuild) $(main_server)
 
 client:
-	$(ocamlbuild) -use-ocamlfind $(main_client)
+	$(ocamlbuild) $(main_client)
 
 run:
 	ocsigenserver -c ocsigen.conf

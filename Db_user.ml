@@ -62,6 +62,12 @@ let get_friends_by_id id : int64 list Lwt.t =
   Db.query <:select< {user_id = x.user_id; friend_id = x.friend_id } | x in $friends$; >>
   >|= (Core_list.filter_map ~f:(fun x -> if x#!user_id = id then Some (x#!friend_id) else None))
 
+(* TODO: make select * from users  JOIN friends ON (users.id=friends.user_id);
+    somehow *)
+
+let foo id =
+  Db.view
+
 let user_exists_by_nick nick =
   Db.view_opt
     (<:view< {
