@@ -12,8 +12,7 @@ open Lwt
 external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
 
 (* Eliom references *)
-let username  = Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
-let userid    = Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
+let user_n_id = Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
 let wrong_pwd = Eliom_reference.eref ~scope:Eliom_common.request_scope false
 
 (* Page widgets: *)
@@ -60,14 +59,12 @@ let wrap_main_page xs =
 let _ =
   Eliom_registration.Html5.register ~service:main_service
     (fun () () ->
-      lwt u = Eliom_reference.get username in
       lwt wp = Eliom_reference.get wrong_pwd in
-      lwt id = Eliom_reference.get userid in
-        (match u with
-            | Some name ->
-                Userpage.page ~name ~id:(Option.value_exn id) >|= wrap_main_page
-
-            | None ->
+      lwt user_n_id = Eliom_reference.get user_n_id in
+      (match user_n_id with
+        | Some (name,id) ->
+            Userpage.page ~name ~id:id >|= wrap_main_page
+        | None ->
                 let l : _ list =
                   [post_form ~service:connection_service
                       (fun (name1, name2) ->
@@ -92,7 +89,7 @@ let _ =
     )
 
 let authenticated_handler ok bad =
-  Eliom_tools.wrap_handler (fun () -> Eliom_reference.get username) bad ok
+  Eliom_tools.wrap_handler (fun () -> Eliom_reference.get user_n_id) bad ok
 
 let _ =
   let friend_content o =
@@ -104,16 +101,13 @@ let _ =
       ; div ~a:[a_class ["user-exp-placeholder";  "inl-b"; ]] [pcdata (Int32.to_string o#exp)]
     ] |> Lwt.return
   in
-  let f = authenticated_handler (fun name () () ->
-    lwt id = Eliom_reference.get userid in
-    let id = Option.value_exn id in
-
+  let f = authenticated_handler (fun (nick,id) () () ->
     lwt friends_ids = Db_user.get_friends_by_id id in
     lwt friends_info = Db_user.friends_of_user_by_id ~id in
     lwt friends_content = Lwt_list.map_p friend_content friends_info in
     Eliom_registration.Html5.send
       (wrap_main_page
-         [div [div [pcdata (sprintf "friends of user %s(%s) will be listed here" name (Int64.to_string id))]
+         [div [div [pcdata (sprintf "friends of user %s(%s) will be listed here" nick (Int64.to_string id))]
               ;br ()
               ;div [pcdata "friends are:"]
               ;div [pcdata (Core_list.to_string  ~f:Int64.to_string friends_ids)]
@@ -147,14 +141,12 @@ let _ =
 
   Eliom_registration.Action.register
     ~service:connection_service
-    (fun () (name, password) ->
+    (fun () (nick, password) ->
       try
-        lwt okay = Db_user.check_password name password in
+        lwt okay = Db_user.check_password nick password in
         (match okay with
-          | Some id ->
-              let _ = Eliom_reference.set username (Some name) in
-              Eliom_reference.set userid   (Some id)
-          | None -> Eliom_reference.set wrong_pwd true
+          | Some id -> Eliom_reference.set user_n_id (Some (nick,id))
+          | None    -> Eliom_reference.set wrong_pwd true
         )
       with
         | exn ->
@@ -219,8 +211,7 @@ let _ =
 let _ =
   Eliom_registration.Action.register ~service:append_feed (fun () (text,exp) ->
     print_endline ("appending feed: "^ text);
-    lwt id = Eliom_reference.get userid in
-    let userid = Option.value_exn id in
-(*    let exp = match Int32.of_int exp with Some x -> x | None  -> 1l in *)
+    Eliom_reference.get user_n_id >|= (function Some x -> x | None -> assert false)
+    >>= fun (nick,userid) ->
     Db_user.add_post ~userid ~text ~material_id:Int64.one ~exp
   )
