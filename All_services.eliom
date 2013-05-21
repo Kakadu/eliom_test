@@ -39,6 +39,8 @@ let append_feed =
                                       (string "tags") ) *)
     ()
 
+let post_wizard = Eliom_service.service ~path:["wizard"] ~get_params:Eliom_parameter.unit ()
+
 (* Eliom session data *)
 let user_n_id: (string*int64) option Eliom_reference.eref =
   Eliom_reference.eref ~scope:Eliom_common.default_session_scope None

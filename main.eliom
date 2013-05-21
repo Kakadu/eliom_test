@@ -36,11 +36,14 @@ let create_account_form () =
 let page_head =
   head (title (pcdata ""))
     [ css_link ~uri:(make_uri (Eliom_service.static_dir ()) ["main.css"]) ()
+    ; js_script ~uri:(Eliom_content.Xml.uri_of_string "client.js") ()
     ]
 
 (* template for all pages. 1st argumens will is content of user div*)
 let wrap_main_page xs =
-  html page_head
+  Eliom_tools.D.html
+    ~title:"title"
+    ~css:[["main.css"]]
     (body [div ~a:[a_id "main_container"]
               [ Header.search_bar
               ; div ~a:[a_id "contentwrapper"]
@@ -53,7 +56,7 @@ let wrap_main_page xs =
 
 (* Registration of services *)
 let _ =
-  Eliom_registration.Html5.register ~service:main_service
+  App.register ~service:main_service
     (fun () () ->
       lwt wp = Eliom_reference.get wrong_pwd in
       lwt user_n_id = Eliom_reference.get user_n_id in
@@ -75,12 +78,13 @@ let _ =
                             ]]) ();
                    p [a new_user_form_service [pcdata "Create an account"] ()]]
                 in
-                html page_head (body
-                                  (if wp
-                                   then [div ((p [em [pcdata "Wrong user or password"]])::l)]
-                                   else [div l]
-                                  )
-                ) |> Lwt.return
+                Eliom_tools.D.html ~title:"Please login" ~css:[["main.css"]]
+                  (body
+                     (if wp
+                      then [div ((p [em [pcdata "Wrong user or password"]])::l)]
+                      else [div l]
+                     )
+                  ) |> Lwt.return
         )
     )
 
@@ -157,8 +161,7 @@ let _ =
     ~service:disconnection_service
     (fun () () -> Eliom_state.discard ~scope:Eliom_common.default_session_scope ());
 
-  Eliom_registration.Html5.register
-    ~service:new_user_form_service
+  App.register ~service:new_user_form_service
     (fun () () ->
       Lwt.return
         (html page_head
@@ -166,8 +169,7 @@ let _ =
                      create_account_form ();
                     ])));
 
-  Eliom_registration.Html5.register
-    ~service:account_confirmation_service
+  App.register ~service:account_confirmation_service
     (fun () (nick, password) ->
       (* TODO: check if new user nick is already exists in database *)
       let create_account_service =
@@ -187,7 +189,7 @@ let _ =
                         a ~service:main_service [pcdata "No"] ()]
                     ])));
 
-  Eliom_registration.Html5.register ~service:search_service
+  App.register ~service:search_service
     (fun query () ->
       Lwt.return
         (html page_head

@@ -170,3 +170,14 @@ let add_post ~userid ~text ~exp ~material_id =
     comments         = $string:text$;
     date_of_creation = posts?date_of_creation;
   } >>)
+
+let skills_id_seq = (<:sequence< bigserial "skills_id_seq" >>)
+let skills = (<:table< skills (
+  id               bigint    NOT NULL DEFAULT(nextval $skills_id_seq$),
+  descr            text      NOT NULL,
+  maxexp           integer   NOT NULL
+) >>)
+
+let all_skills () =
+  Db.view (<:view< { x.id; x.descr } | x in $skills$ >>)
+  >|= (Core_list.map ~f:(fun o -> object method id = o#!id method descr = o#!descr end))

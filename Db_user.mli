@@ -81,3 +81,5 @@ val select_posts_of_user: int64 ->
          Core.Core_list.t Lwt.t
 
 val add_post: userid:int64 -> text: string -> exp:int32 -> material_id:int64 -> unit Lwt.t
+
+val all_skills: unit -> <id: int64; descr: string > list Lwt.t
