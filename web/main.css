@@ -89,3 +89,56 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
     margin-left: 5px;
     width: 600px;
 }
+
+.tag-suggestions {
+    background-color: #ffffff;
+    border: 1px solid #777;
+    z-index: 300;
+    float: left;
+    max-width: 600px;
+    max-height: 400px;
+    /*background-color: green;*/
+    overflow: hidden;
+    float: left;
+    /*display: table-cell;*/
+    display: none;
+    cursor:  pointer;
+    padding: 5px;
+    /*width: 600px;*/
+    overflow: hidden;
+    float: left;
+    position: absolute;
+/*    height: 300px;*/
+    /*background-color: #ffe6bf;*/
+    padding: 5px;
+}
+.tag-suggestions .match {
+    font-weight: bold;
+    text-decoration: underline;
+}
+.post-tag, .post-text .post-tag, .wmd-preview a.post-tag {
+    color: #3E6D8E;
+    background-color: #E0EAF1;
+    border-bottom: 1px solid #b3cee1;
+    border-right: 1px solid #b3cee1;
+    padding: 3px 4px 3px 4px;
+    margin: 2px 2px 2px 0;
+    text-decoration: none;
+    font-size: 90%;
+    line-height: 2.4;
+    white-space: nowrap;
+}
+
+.suggestion-item {
+    display: inline-block;
+/*    width:   208px;
+    height:  208px; */
+    /* width and height will be auto-evaluated */
+    padding: 5px;
+    margin:  3px;
+    /*color:   white;
+    background-color: blue; */
+}
+.suggestion-item:hover {
+    background-color: #fff0d9;
+}

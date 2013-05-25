@@ -12,24 +12,39 @@ insert into friends values
 ;
 /* adding skills */
 INSERT INTO skills (id, descr, maxexp) VALUES
-        (DEFAULT, 'Chess', 1000),
-        (DEFAULT, 'Kings Gambit', 500),
+        (1, 'Chess', 1000),
+        (2, 'Kings Gambit', 500),
         
-        (DEFAULT, 'Music', 1000),
-        (DEFAULT, 'Classic music', 300),
+        (200, 'Music', 1000),
+        (201, 'Classic music', 300),
 
-        (DEFAULT, 'IT',    2000),
-        (DEFAULT, 'Software engeneering', 1000),
+        (400, 'IT',    2000),
+        (401, 'Software engeneering',               1000),
+        (402, 'Project mangement',                  1000),
+        (420, 'Linux',                              1000),
+        (421, 'Linux kernel development',            500),
+        (450, 'Windows',                            1000),
+        (460, 'Programming languages',              5000),
+        (461, 'C++',                                 100),
+        (462, 'Windows development in C++',           20),
+        (463, 'Cross-platform development',          500),
 
-        (DEFAULT, 'Literature', 3000),
-        (DEFAULT, 'Classic literature', 2000),
-        (DEFAULT, 'Poetry',             2000)
+        (475, 'OCaml',                               200),
+        (476, 'Web-develpment',                       50),
+
+        (600, 'Literature', 3000),
+        (601, 'Classic literature', 2000),
+        (602, 'Poetry',             2000)
         ;
 INSERT INTO parent_skills (child_id, parent_id) VALUES
-        (2,1),
-        (4,3),
-        (6,5),
-        (8,7), (9,7)
+        (  2,  1),
+        (201,200),
+        (401,400), (420,400), (450,400), (460,400),
+        /* SE */   (402,401), 
+        /* Linux*/ (421,420),
+        /*windows*/
+        /*langs */ (461,460), (462,461), (463,461), (475, 460), (476,475),
+        (602,600), (601,600)
 ;
 /* adding maetrials for skills above */
 INSERT INTO material_sorts (descr, action) VALUES /* I omit id here */
@@ -37,12 +52,12 @@ INSERT INTO material_sorts (descr, action) VALUES /* I omit id here */
         ('music', 'music')
 ;
 INSERT INTO materials (title, author, exp, profit, sort_id, skill_id) VALUES
-        ('Andersen-Kiseritsky. Immortal game', 'Andersen', 5, 5, 1, 2),
-        ('Live concert in Saint-Petersburg on May 17, 2013', 'Tarja Turunen', 11, 11, 2, 3),
-        ('Git manual', 'Git team', 1, 1, 1, 6),
-        ('Anna Karenina','Lev Tolstoy', 10,10, 1, 8),
-        ('I remember wonderful moment', 'Alexander Pushkin', 5, 5, 1, 9),
-        ('Kuznetchik', 'hz', 100,100, 2, 3)
+        ('Andersen-Kiseritsky. Immortal game', 'Andersen',                     5,  5,  1,   2),
+        ('Live concert in Saint-Petersburg on May 17, 2013', 'Tarja Turunen', 11, 11,  2, 200),
+        ('Git manual', 'Git team',                                             1,  1,  1, 401),
+        ('Anna Karenina','Lev Tolstoy',                                       10, 10,  1, 601),
+        ('I remember wonderful moment', 'Alexander Pushkin',                   5,  5,  1, 602),
+        ('Kuznetchik', 'hz',                                                 100,100,  2, 200)
 ;
 
 /* posts */

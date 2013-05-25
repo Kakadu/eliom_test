@@ -19,6 +19,8 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *)
 
+(* adopted from cumulus *)
+
 let (>>=) = Lwt.(>>=)
 
 module Lwt_thread = struct
@@ -44,6 +46,29 @@ let connect () =
     ~user:"kakadu"
     ~port:5434
     ()
+
+open Printf
+
+let do_search text =
+    lwt dbh = connect () in
+    let open Core.Std in
+    let open Lwt_PGOCaml in
+    (* TODO check that text is not SQL injection *)
+    let query =
+      sprintf "select id,descr,maxexp from skills where to_tsvector(descr) @@ to_tsquery('%s')" text  in
+    let make a b c = object
+      method id = match a with Some a -> Int64.of_string a | _ -> assert false
+      method descr  = match b with None -> "" | Some b -> b
+      method maxexp = match c with Some c -> Int32.of_string c | None -> assert false
+      (* Stupid checks should be validated by compiler in a perfect world *)
+    end in
+    let s text : _ list monad =
+      lwt () = prepare dbh ~query () in
+      lwt xs = execute dbh ~params:[] () in
+      List.filter_map xs ~f:(function [a;b;c] -> Some (make a b c) | _ -> None) |> return
+    in
+    let rows = s text in
+    rows
 
 let validate db =
   Lwt.try_bind

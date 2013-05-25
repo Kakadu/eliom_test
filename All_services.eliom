@@ -7,6 +7,10 @@ module Traktor_app =
       let application_name = "traktor"
     end)
 
+{shared{
+external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
+}}
+
 (* Services *)
 let main_service = Eliom_service.service ~path:[""] ~get_params:unit ()
 

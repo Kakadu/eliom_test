@@ -3,8 +3,7 @@ main_server := $(addprefix _server/, server.cma server.cmxs)
 main_client := $(addprefix _client/, client.js)
 all := all.otarget
 
-all: 
-	$(ocamlbuild) $(main_server) $(main_client)
+all: server client
 
 server:
 	$(ocamlbuild) $(main_server)
@@ -14,6 +13,7 @@ client:
 
 run:
 	ocsigenserver -c ocsigen.conf
+
 run.opt:
 	ocsigenserver.opt -c ocsigen.conf
 
