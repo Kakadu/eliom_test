@@ -52,3 +52,6 @@ let wrong_pwd = Eliom_reference.eref ~scope:Eliom_common.request_scope false
 
 let authenticated_handler ok bad =
   Eliom_tools.wrap_handler (fun () -> Eliom_reference.get user_n_id) bad ok
+
+let view_skills =
+  Eliom_service.service ~path:["hack_skills"] ~get_params:Eliom_parameter.unit ()

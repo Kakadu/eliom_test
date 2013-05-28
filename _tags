@@ -2,6 +2,7 @@
 "web": -traverse
 true: debug
 #true: verbose
+true: pkg_ocamlgraph
 true: syntax_camlp4o, pkg_core
 #true: pkg_safepass
 true: pkg_eliom.server, pkg_pgocaml, pkg_macaque,  pkg_threads, pkg_lwt.syntax

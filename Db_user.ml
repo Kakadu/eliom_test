@@ -181,3 +181,13 @@ let skills = (<:table< skills (
 let all_skills () =
   Db.view (<:view< { x.id; x.descr } | x in $skills$ >>)
   >|= (Core_list.map ~f:(fun o -> object method id = o#!id method descr = o#!descr end))
+
+let skills_id_seq = (<:sequence< bigserial "parent_skills_id_seq" >>)
+let parent_skills =  (<:table< parent_skills (
+  child_id         bigint    NOT NULL DEFAULT(nextval $skills_id_seq$),
+  parent_id        bigint
+) >>)
+
+let get_skill_links () =
+  Db.view <:view< x | x in $parent_skills$ >>
+  >|= (Core_list.map ~f:(fun o -> (o#!child_id, o#?parent_id)))

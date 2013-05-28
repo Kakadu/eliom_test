@@ -83,3 +83,4 @@ val select_posts_of_user: int64 ->
 val add_post: userid:int64 -> text: string -> exp:int32 -> material_id:int64 -> unit Lwt.t
 
 val all_skills: unit -> <id: int64; descr: string > list Lwt.t
+val get_skill_links: unit -> (int64*(int64 option)) list Lwt.t
