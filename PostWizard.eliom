@@ -50,8 +50,10 @@ open Printf
 {client{
   let show_suggestions = ref true
   let showhide_element_by_id ~value id =
-    Js.Unsafe.eval_string
-      (sprintf "document.getElementById('%s').style.display = '%s';" id value) |> ignore
+    let open Opt in
+    case (Dom_html.document##getElementById (Js.string id))
+      (fun () -> Firebug.console##error (Js.string (sprintf "element with id='%s' not found" id)))
+      (fun e -> Eliom_content.Html5.(Manip.SetCss.display (Of_dom.of_element e) value))
 
   let set_text_value ~value id =
     Js.Unsafe.eval_string
@@ -178,10 +180,41 @@ and wizard2_handler () (area_name, area_id) =
     printf "area_name = %s \n%!" area_name;
     printf "area_id   = %s\n%!" (match area_id with Some x -> Int64.to_string x | None -> "<none>");
 
+    let submit_btn = button ~button_type:`Submit [pcdata "Send"]
+      ~a:[a_id "submit_23"; a_style "display: none;"] in
     let validate_input =
       {{ fun _ ->
         Firebug.console##log (Js.string "111");
-        ignore ( title_input_id );
+        let open Dom_html in
+        let (show_submit, hide_submit) =
+          let f v =
+            Firebug.console##log (Js.string "222");
+            try Eliom_content.Html5.Manip.SetCss.display %submit_btn v
+            with Not_found -> Firebug.console##error (sprintf "Can't find submit button" |> Js.string)
+          in
+          ((fun () -> f "block"), (fun () -> f "none"))
+        in
+        let open Opt in
+
+        begin
+          let (>>>=) name f =
+            document##getElementById (Js.string name) >>= fun e ->
+            let x: inputElement Js.t = Js.Unsafe.coerce e in
+            f x
+          in
+          title_input_id   >>>= fun title_el ->
+          comment_input_id >>>= fun comment_el ->
+          exp_input_id     >>>= fun exp_el  ->
+          author_input_id  >>>= fun author_el ->
+          let check_empty el info_id =
+            if Js.to_string el##value = ""
+            then
+            hide_submit ()
+
+          in
+          ignore ( title_input_id );
+          return ()
+        end |> ignore;
         ()
       }}
     in
@@ -211,8 +244,7 @@ and wizard2_handler () (area_name, area_id) =
                       ; make_label "Experience:"
                       ; make_int32_input exp_input_id exp
                       ; make_info_div "exp_info"; br ()
-
-                      ; button       ~button_type:`Submit [pcdata "Send"]
+                      ; submit_btn
                       ]
                     ) ()
                   ]
