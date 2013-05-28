@@ -131,8 +131,6 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 
 .suggestion-item {
     display: inline-block;
-/*    width:   208px;
-    height:  208px; */
     /* width and height will be auto-evaluated */
     padding: 5px;
     margin:  3px;
@@ -141,4 +139,8 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 }
 .suggestion-item:hover {
     background-color: #fff0d9;
+}
+
+#send_area_btn {
+    display: none;
 }

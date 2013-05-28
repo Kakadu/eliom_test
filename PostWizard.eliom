@@ -142,7 +142,7 @@ let rec wizard1_handler () () =
                 ; post_form wizard2_service
                   (fun (area_name,area_id) ->
                     [ label        [pcdata "Set the skill area:"]; br ()
-                    ; int64_input ~a:[a_id "area_id"] (*~value:Int64.zero*) ~name:area_id ~input_type:`Hidden ()
+                    ; int64_input ~a:[a_id "area_id"] ~value:Int64.zero ~name:area_id ~input_type:`Hidden ()
                     ; div ~a:[a_class []]
                       [ string_input ~a:a_input ~input_type:`Text    ~name:area_name ()
                       ; button   ~a:[a_id "send_area_btn"] ~button_type:`Submit [pcdata "Use this tag!"]
