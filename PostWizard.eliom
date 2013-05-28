@@ -4,7 +4,7 @@ open Eliom_parameter
 open Main
 
 {shared{
-open Printf
+  open Printf
 }}
 
 {client{
@@ -27,7 +27,6 @@ open Printf
   type rpc_res_t =Int64.t * string * ([ Html5_types.div ] Eliom_content.Html5.D.elt)
 }}
 {server{
-
   let template ~descr ~query ~exp =
     div ~a:[a_class ["suggestion-item"]]
       [ span ~a:[a_class ["post_tag"]]
