@@ -54,12 +54,10 @@ open Printf
       (sprintf "document.getElementById('%s').style.display = '%s';" id value) |> ignore
 
   let set_text_value ~value id =
-    Firebug.console##log (Js.string (sprintf "set_text_value of %s to %s" id value));
     Js.Unsafe.eval_string
       (sprintf "document.getElementById('%s').value = '%s';" id value) |> ignore
 
   let showhide_suggestions value =
-    Firebug.console##log (Js.string ("show/hide suggestions:\t" ^ value));
     showhide_element_by_id "azazelle" ~value
 
   let showhide_submit_btn value =
@@ -68,7 +66,20 @@ open Printf
   (* this hidden field will be send with form data *)
   let set_hidden_id id : unit = Js.Unsafe.eval_string
     (sprintf "document.getElementById('area_id').value = %s;" (Int64.to_string id)) |> ignore
+
 }}
+{shared{
+  let title_input_id = "post_form_step23_comment"
+  let comment_input_id = "post_form_step23_comment"
+  let author_input_id = "post_form_step23_comment"
+  let exp_input_id = "post_form_step23_comment"
+}}
+(*
+{client{
+  let checks_on_step2 () =
+
+    ()
+}} *)
 
 let rec wizard1_handler () () =
   let wizard2_service = App.register_post_coservice
@@ -163,29 +174,51 @@ and wizard2_handler () (area_name, area_id) =
                       (Eliom_parameter.string "comment") **
                       (Eliom_parameter.int32  "experience")
         )
-        (wizard3_handler area_name) in
+        (wizard3_handler area_name area_id) in
     printf "area_name = %s \n%!" area_name;
     printf "area_id   = %s\n%!" (match area_id with Some x -> Int64.to_string x | None -> "<none>");
+
+    let validate_input =
+      {{ fun _ ->
+        Firebug.console##log (Js.string "111");
+        ignore ( title_input_id );
+        ()
+      }}
+    in
+    let make_label text = label ~a:[a_class ["post_wizard_step23_label"]] [pcdata text] in
+    let make_info_div id = div ~a:[a_class ["inl-b"]; a_id id] [] in
+    let make_string_input id name = string_input ~input_type:`Text ~name
+      ~a:[a_id id; a_oninput validate_input; a_class ["post_wizard_step23_input"]] () in
+    let make_int32_input id name = int32_input ~input_type:`Number  ~value:Int32.one ~name
+      ~a:[a_id id; a_oninput validate_input; a_class ["post_wizard_step23_input"]] () in
+
     Lwt.return (wrap_main_page
-                  [ h2 [pcdata "Step 2/3"]
-                  ; p  [pcdata "You've selected area:"; pcdata area_name]
+                  [ h2 [pcdata (sprintf "Step 2/3: upgrading skill '%s'" area_name)]
                   ; post_form wizard3_service
                     (fun (title,(author, (comment,exp))) ->
-                      [ label [pcdata "Title"]
-                      ; string_input ~input_type:`Text  ~name:title  (); br ()
-                      ; label [pcdata "Author"]
-                      ; string_input ~input_type:`Text  ~name:author (); br ()
-                      ; label [pcdata "Comment"]
-                      ; string_input ~input_type:`Text  ~name:comment (); br ()
-                      ; label [pcdata "Experience"]
-                      ; int32_input ~input_type:`Number ~name:exp    (); br ()
+                      [ make_label "Title:"
+                      ; make_string_input title_input_id title
+                      ; make_info_div "title_info"; br ()
+
+                      ; make_label "Author:"
+                      ; make_string_input author_input_id author
+                      ; make_info_div "author_info"; br ()
+
+                      ; make_label "Comment:"
+                      ; make_string_input comment_input_id comment
+                      ; make_info_div "comment_info"; br ()
+
+                      ; make_label "Experience:"
+                      ; make_int32_input exp_input_id exp
+                      ; make_info_div "exp_info"; br ()
+
                       ; button       ~button_type:`Submit [pcdata "Send"]
                       ]
                     ) ()
                   ]
     )
 
-and wizard3_handler area_name () (title,(author, (comment,exp))) =
+and wizard3_handler area_name area_id () (title,(author, (comment,exp))) =
     let wizard4_service = App.register_post_coservice
         ~scope:Eliom_common.default_session_scope
         ~fallback:post_wizard
@@ -196,6 +229,8 @@ and wizard3_handler area_name () (title,(author, (comment,exp))) =
            [ post_form wizard4_service (fun () ->
              [ p [pcdata "Preview post here"]
              ; p [pcdata (Printf.sprintf "area_name = %s" area_name)]
+             ; p [pcdata (Printf.sprintf "area_id   = %s"
+                            (match area_id with Some x -> Int64.to_string x | None -> "<none>"))]
              ; p [pcdata (Printf.sprintf "title     = %s" title)]
              ; p [pcdata (Printf.sprintf "author    = %s" author)]
              ; p [pcdata (Printf.sprintf "comment   = %s" comment)]

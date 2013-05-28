@@ -144,3 +144,11 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 #send_area_btn {
     display: none;
 }
+
+.post_wizard_step23_label {
+    display: inline-block;
+    width:   100px;
+}
+.post_wizard_step23_input {
+    width: 200px;
+}
