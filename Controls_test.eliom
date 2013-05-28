@@ -41,9 +41,6 @@ let wizard1_handler () () =
 
   let sugg_container_id = "azazelle" in
   let container = div ~a:[a_id sugg_container_id; a_class ["tag-suggestions"] ] [] in
-  let get_suggestions s =
-    suggestions s
-  in
 
   Lwt.return (wrap_main_page
                 [ h2 [pcdata "Adding post (step 1/3)"]
@@ -57,7 +54,7 @@ let wizard1_handler () () =
                           ~sugg_container_id
                           ~name:area_name
                           ~attribs:[]
-                          get_suggestions
+                          rpc_make_suggestions
                           template
                           {unit->unit{
                             fun _ev -> Firebug.console##log (Js.string "111")
