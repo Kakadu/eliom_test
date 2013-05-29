@@ -4,26 +4,35 @@ open Printf
 
 let post_wizard = Eliom_service.service ~path:["test1"] ~get_params:Eliom_parameter.unit ()
 
-{server{
-  type rpc_res_t =Int64.t * string * ([ Html5_types.div ] Eliom_content.Html5.D.elt)
+{shared{
+  open Eliom_content.Html5.D
+}}
 
-  let template ~descr ~query ~exp =
+{server{
+  type rpc_res_t = (int32 * string * int64) deriving (Json)
+  let template (maxexp,descr,_) =
     div ~a:[a_class ["suggestion-item"]]
       [ span ~a:[a_class ["post_tag"]]
           [ span ~a:[a_class ["match"]] [pcdata descr]
           ]
       ; br ()
-      ; span ~a:[a_style "item-multiplier"] [pcdata (sprintf "≤ %s" (Int32.to_string exp))]
-      ]
+      ; span ~a:[a_style "item-multiplier"] [pcdata (sprintf "≤ %s" (Int32.to_string maxexp))]
+      ] |> Lwt.return
+
 
   let suggestions query: rpc_res_t list Lwt.t =
     let open Lwt in
-    Db.do_search query >|= (List.map (fun o -> (o#id,o#descr,template ~query ~descr:o#descr ~exp:o#maxexp)))
+    Db.do_search query  >|= (List.map (fun o -> (o#maxexp,o#descr,o#id)))
 
   let rpc_make_suggestions
       : (string, rpc_res_t list)
       Eliom_pervasives.server_function =
     server_function Json.t<string> suggestions
+
+  let template_rpc
+      : (rpc_res_t, [ Html5_types.div ] Eliom_content.Html5.D.elt)
+      Eliom_pervasives.server_function
+      = server_function Json.t<rpc_res_t> template
 }}
 
 let wizard2_handler () s =
@@ -48,16 +57,14 @@ let wizard1_handler () () =
                   (fun (area_name) ->
                     [ label        [pcdata "Wizard1:"]; br ()
                     ; div ~a:[a_class []]
-                      [ (* string_input  ~input_type:`Text    ~name:area_name () *)
-                        Controls.text_with_suggestions
-                          ~id:"input1"
-                          ~sugg_container_id
+                      [ Controls.text_with_suggestions
+                          ~container
                           ~name:area_name
-                          ~attribs:[]
+                          ~a:[]
                           rpc_make_suggestions
-                          template
+                          template_rpc
                           {unit->unit{
-                            fun _ev -> Firebug.console##log (Js.string "111")
+                            fun _ev -> Firebug.console##log (Js.string "onselected")
                            }}
                       ; button   ~a:[a_id "send_area_btn"] ~button_type:`Submit [pcdata "Use this tag!"]
                       ; br ()
