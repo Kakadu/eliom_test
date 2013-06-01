@@ -48,10 +48,9 @@ open Main
       = server_function Json.t<rpc_res_skill> template_skill
 
   let suggestions_skill query: rpc_res_skill list Lwt.t =
-    print_endline "FFFFOO";
     let open Lwt in
     Db.search_skill_by_descr query >|= (List.map (fun o ->
-      printf "Suggestions_rpc says: %s\n%!" o#descr;
+      (*printf "Suggestions_rpc says: %s\n%!" o#descr; *)
       (o#maxexp,o#descr,o#id)
     ))
 
@@ -90,8 +89,6 @@ open Main
           let ans: Dom_html.inputElement Js.t  = Js.Unsafe.coerce x in
           f ans
         )
-
-
 }}
 
 {shared{
@@ -125,8 +122,6 @@ let rec wizard1_handler _get _post (*: ('a, 'b) Eliom_registration.kind Lwt.t *)
     ~post_params:(Eliom_parameter.(string "area_name" **  (int64 "area_id")))
     wizard2_handler in
 
-  All_services.authenticated_handler
-    (fun _ () () ->
       let container = div ~a:[a_id "azazelle"; a_class ["tag-suggestions"] ] [] in
       let submit_form_btn = button ~a:[a_id "send_area_btn"; a_style "visibility: hidden;"]
         ~button_type:`Submit [pcdata "Use this tag!"] in
@@ -141,33 +136,29 @@ let rec wizard1_handler _get _post (*: ('a, 'b) Eliom_registration.kind Lwt.t *)
           set_text_value "area_id" ~value:(Int64.to_string id);
       }}
       in
-      (*Eliom_registration.Html5.send *)
-      Lwt.return
-        (wrap_main_page
-           [ h2 [pcdata "Adding post (step 1/3)"]
-           ; post_form wizard2_service
-             (fun (area_name,area_id) ->
-               [ label        [pcdata "Set the skill area:"]; br ()
-               ; int64_input ~a:[a_id "area_id"] ~value:Int64.zero ~name:area_id ~input_type:`Hidden ()
-               ; div ~a:[a_class []]
-                 [ Controls.text_with_suggestions
-                     ~container
-                     ~name:area_name
-                     ~a:[a_class ["post_wizard_step13_input"]]
-                     suggestions_for_skill_rpc
-                     template_skill_rpc
-                     on_show_suggestions_div
-                     on_selected
-                 ; submit_form_btn
-                 ; br ()
-                 ; container
-                 ]
-               ]
-             ) ()
-           ]
-        )
-    )
-    (fun () () -> assert false (*Eliom_registration.Redirection.send main_service *) ) _get _post
+      (fun  _ -> wrap_main_page
+        [ h2 [pcdata "Adding post (step 1/3)"]
+        ; post_form wizard2_service
+          (fun (area_name,area_id) ->
+            [ label        [pcdata "Set the skill area:"]; br ()
+            ; int64_input ~a:[a_id "area_id"] ~value:Int64.zero ~name:area_id ~input_type:`Hidden ()
+            ; div ~a:[a_class []]
+              [ Controls.text_with_suggestions
+                  ~container
+                  ~name:area_name
+                  ~a:[a_class ["post_wizard_step13_input"]]
+                  suggestions_for_skill_rpc
+                  template_skill_rpc
+                  on_show_suggestions_div
+                  on_selected
+              ; submit_form_btn
+              ; br ()
+              ; container
+              ]
+            ]
+          ) ()
+        ] |> Lwt.return
+      ) |> Lwt.return
 
 and wizard2_handler () (area_name, area_id) =
     let wizard3_service = App.register_post_coservice
@@ -196,10 +187,11 @@ and wizard2_handler () (area_name, area_id) =
         statusLabel##style##visibility <- Js.string "visible"
       ) |> ignore
     }} in
-    let set_material_field = {Int64.t->unit{ fun v ->
+    let set_material_field = {string->unit{ fun v ->
+      firelog (sprintf "set_material_field  = %s" v);
       Js.Opt.map (Dom_html.document##getElementById (Js.string material_input_id) ) ( fun e ->
         let e: Dom_html.inputElement Js.t = Js.Unsafe.coerce e in
-        e##value <- Js.string (Int64.to_string v)
+        e##value <- Js.string v
       ) |> ignore
     }} in
     let check_existance_material_helper = {unit->unit{ fun () ->
@@ -219,10 +211,10 @@ and wizard2_handler () (area_name, area_id) =
        (let open Lwt in
         %check_material_rpc (cur_title, cur_author) >|= function
           | Some id ->
-              %set_material_field id;
+              %set_material_field (Int64.to_string id);
               %set_status "Using existent material"
           | None    ->
-              %set_material_field Int64.(of_int (-1) );
+              %set_material_field "";
               %set_status "this is new material"
         ) |> Lwt.ignore_result;
         Eliom_content.Html5.Manip.SetCss.visibility %submit_btn "visible"
@@ -260,7 +252,7 @@ and wizard2_handler () (area_name, area_id) =
 
              ; make_label "Experience:"
              ; make_int32_input exp_input_id exp
-             ; int64_input ~a:[a_id material_input_id] ~value:Int64.zero
+             ; int64_input ~a:[a_id material_input_id] (*~value:Int64.zero *)
                ~name:material_id_name ~input_type:`Hidden ()
              ; submit_btn
              ]
@@ -269,48 +261,43 @@ and wizard2_handler () (area_name, area_id) =
       )
 
 and wizard3_handler area_name area_id () (title,(author, (comment,(exp,material_id)))) =
-(*  let wizard4_service = App.register_post_coservice *)
-  let wizard4_service = Eliom_registration.Any.register_post_coservice (*~service:main_service*)
-        ~scope:Eliom_common.default_session_scope
-        ~fallback:post_wizard
-        ~post_params: Eliom_parameter.unit
-        (wizard4_handler area_id ~title ~comment ~author ~exp material_id)
+  let wizard4_service = Eliom_service.post_coservice
+        ~fallback:main_service
+        ~post_params: Eliom_parameter.unit ()
+  in
+  let () = WithDefault.Wrap.action_with_redir_register ~service:wizard4_service
+    (wizard4_handler area_id ~title ~comment ~author ~exp material_id)
   in
   Lwt.return
-        (wrap_main_page
-           [ post_form wizard4_service (fun material_id ->
-             [ p [pcdata "Preview post here"]
-             ; p [pcdata (Printf.sprintf "area_name = %s" area_name)]
-             ; p [pcdata (Printf.sprintf "area_id   = %s" (Int64.to_string area_id))]
-             ; p [pcdata (Printf.sprintf "title     = %s" title)]
-             ; p [pcdata (Printf.sprintf "author    = %s" author)]
-             ; p [pcdata (Printf.sprintf "comment   = %s" comment)]
-             ; p [pcdata (Printf.sprintf "exp       = %s" (Int32.to_string exp))]
-             ; button       ~button_type:`Submit [pcdata "Publish"]
-             ]
-             ) ()
-           ]
-        )
-
-and wizard4_handler skill_id ~title ~author ~exp ~comment material_id  =
-  All_services.authenticated_handler
-    (fun (nick,userid) () () ->
-      let material_id =
-        match material_id with
-          | Some id -> id
-          | None ->
-              (* We will add new material *)
-              (Db_user.add_material ~title ~author ~exp ~skill_id ~profit:0l ~sort_id:Int64.zero)
-                 |> Lwt.ignore_result;
-              Db_user.last_inserted_material_id ()
-      in
-      Db_user.add_post ~text:comment ~exp ~material_id ~userid |> Lwt.ignore_result;
-      Eliom_registration.Redirection.send main_service
+    (wrap_main_page
+       [ post_form wizard4_service (fun material_id ->
+         [ p [pcdata "Preview post here"]
+         ; p [pcdata (Printf.sprintf "area_name = %s" area_name)]
+         ; p [pcdata (Printf.sprintf "area_id   = %s" (Int64.to_string area_id))]
+         ; p [pcdata (Printf.sprintf "title     = %s" title)]
+         ; p [pcdata (Printf.sprintf "author    = %s" author)]
+         ; p [pcdata (Printf.sprintf "comment   = %s" comment)]
+         ; p [pcdata (Printf.sprintf "exp       = %s" (Int32.to_string exp))]
+         ; button       ~button_type:`Submit [pcdata "Publish"]
+         ]
+         ) ()
+       ]
     )
-    (fun _ () -> Eliom_registration.Redirection.send main_service )
-(*
+
+and wizard4_handler skill_id ~title ~author ~exp ~comment material_id (nick,userid) () () =
+  (lwt material_id =
+    match material_id with
+      | Some id -> Lwt.return id
+      | None ->
+          printf "Adding new material\n%!";
+          (* We will add new material *)
+          lwt () = Db_user.add_material ~title ~author ~exp ~skill_id ~profit:0l ~sort_id:Int64.zero in
+          Db_user.last_inserted_material_id () |> Lwt.return
+   in
+   lwt () = Db_user.add_post ~text:comment ~exp ~material_id ~userid in
+   Lwt.return ()
+  ) |> Lwt.ignore_result;
+  Eliom_registration.Redirection.send main_service
+
 let () =
-    Eliom_registration.Any.register ~service:post_wizard wizard1_handler
-  *)
-let () =
-    App.register ~service:post_wizard wizard1_handler
+    WithDefault.register ~service:post_wizard wizard1_handler

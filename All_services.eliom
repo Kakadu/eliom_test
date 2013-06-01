@@ -1,12 +1,6 @@
 open Eliom_content.Html5.D
 open Eliom_parameter
 
-module Traktor_app =
-  Eliom_registration.App (
-    struct
-      let application_name = "traktor"
-    end)
-
 {shared{
 external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
 }}
@@ -55,3 +49,93 @@ let authenticated_handler ok bad : 'get -> 'post -> 'res Lwt.t =
 
 let view_skills =
   Eliom_service.service ~path:["hack_skills"] ~get_params:Eliom_parameter.unit ()
+
+
+(* Adopting Drup's experience from https://github.com/Drup/evePI/blob/master/auth.ml#L96 *)
+(** The Connected Module
+	This is module wraps usual services to allow an additionnal argument : the user.
+	If the user is not connected, it's redirected to Default_content.v *)
+
+module type Default_content =
+sig
+  val v : unit -> Html5_types.html Eliom_content.Html5.elt
+end
+
+type user = string * int64
+
+module Connected_translate
+	(Default : Default_content)
+	(App : Eliom_registration.ELIOM_APPL) =
+struct
+  type page = user -> App.page Lwt.t
+  let translate page : App.page Lwt.t =
+    match_lwt Eliom_reference.get user_n_id with
+      | None -> Lwt.return (Default.v ())
+      | Some user -> page user
+end
+
+module Connected
+	(Default : Default_content )
+	(App : Eliom_registration.ELIOM_APPL) =
+struct
+  include Eliom_registration.Customize
+	  ( App )
+	  ( Connected_translate (Default) (App) )
+
+  (** Allow to wrap services *)
+  module Wrap = struct
+
+	let action_register action =
+	  let f =
+		Eliom_tools.wrap_handler
+		  (fun () -> Eliom_reference.get user_n_id)
+		  (fun _ _ -> Lwt.return ())
+		  action
+	  in
+	  Eliom_registration.Action.register f
+
+	let action_with_redir_register ?(redir=Eliom_service.void_coservice') action =
+	  let f =
+		Eliom_tools.wrap_handler
+		  (fun () -> Eliom_reference.get user_n_id)
+		  (fun _ _ -> App.send (Default.v ()))
+		  (fun u g p ->
+			 lwt _ = action u g p in
+			 Eliom_registration.Redirection.send redir)
+	  in
+	  Eliom_registration.Any.register f
+
+	let unit_register action =
+	  let f =
+		Eliom_tools.wrap_handler
+		  (fun () -> Eliom_reference.get user_n_id)
+		  (fun _ _ -> Lwt.return ())
+		  action
+	  in Eliom_registration.Unit.register f
+
+  end
+
+end
+
+
+module LoginForm = struct
+  let v () =
+    let l : _ list =
+      [post_form ~service:connection_service
+          (fun (name1, name2) ->
+            [fieldset
+		        [label ~a:[a_for name1] [pcdata "login: "];
+                 string_input ~input_type:`Text ~name:name1 ();
+                 br ();
+                 label ~a:[a_for name2] [pcdata "password: "];
+                 string_input ~input_type:`Password ~name:name2 ();
+                 br ();
+                 string_input ~input_type:`Submit ~value:"Connect" ()
+                ]]) ();
+       p [a new_user_form_service [pcdata "Create an account"] ()]]
+    in
+    Eliom_tools.D.html ~title:"Please login" ~css:[["main.css"]] (body [div l])
+
+end
+
+module WithDefault = Connected(LoginForm)(App)
