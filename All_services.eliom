@@ -119,23 +119,23 @@ end
 
 
 module LoginForm = struct
-  let v () =
-    let l : _ list =
-      [post_form ~service:connection_service
-          (fun (name1, name2) ->
-            [fieldset
-		        [label ~a:[a_for name1] [pcdata "login: "];
-                 string_input ~input_type:`Text ~name:name1 ();
-                 br ();
-                 label ~a:[a_for name2] [pcdata "password: "];
-                 string_input ~input_type:`Password ~name:name2 ();
-                 br ();
-                 string_input ~input_type:`Submit ~value:"Connect" ()
-                ]]) ();
-       p [a new_user_form_service [pcdata "Create an account"] ()]]
-    in
-    Eliom_tools.D.html ~title:"Please login" ~css:[["main.css"]] (body [div l])
-
+  let v () = Eliom_tools.D.html ~title:"Please login" ~css:[["main.css"]]
+    (body
+       [div ~a:[a_class ["login_div"]]
+           [ post_form ~service:connection_service ~a:[a_class ["login_form"]]
+               (fun (name1, name2) ->
+                 [fieldset
+		             [ div ~a:[a_class ["login_label"]] [label ~a:[a_for name1] [pcdata "Login:"]]
+                     ; string_input ~input_type:`Text ~name:name1 (); br ()
+                     ; div ~a:[a_class ["login_label"]] [label ~a:[a_for name2] [pcdata "Password:"]]
+                     ; string_input ~input_type:`Password ~name:name2 (); br ()
+                     ; string_input ~input_type:`Submit ~value:"Connect" ()
+                     ]
+                 ]) ()
+           ; p [a new_user_form_service [pcdata "Create an account"] ()]
+           ]
+       ]
+    )
 end
 
 module WithDefault = Connected(LoginForm)(App)

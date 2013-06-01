@@ -63,29 +63,8 @@ let _ =
       (match user_n_id with
         | Some (name,id) ->
             Userpage.page ~cur_user_id:id ~name ~id >|= wrap_main_page
-        | None ->
-                let l : _ list =
-                  [post_form ~service:connection_service
-                      (fun (name1, name2) ->
-                        [fieldset
-		                    [label ~a:[a_for name1] [pcdata "login: "];
-                             string_input ~input_type:`Text ~name:name1 ();
-                             br ();
-                             label ~a:[a_for name2] [pcdata "password: "];
-                             string_input ~input_type:`Password ~name:name2 ();
-                             br ();
-                             string_input ~input_type:`Submit ~value:"Connect" ()
-                            ]]) ();
-                   p [a new_user_form_service [pcdata "Create an account"] ()]]
-                in
-                Eliom_tools.D.html ~title:"Please login" ~css:[["main.css"]]
-                  (body
-                     (if wp
-                      then [div ((p [em [pcdata "Wrong user or password"]])::l)]
-                      else [div l]
-                     )
-                  ) |> Lwt.return
-        )
+        | None -> LoginForm.v () |> Lwt.return
+      )
     )
 
 let _ =

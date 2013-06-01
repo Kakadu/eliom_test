@@ -194,3 +194,25 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
   background-position: 0px -16px;
   *background-position: 0px -16px;
 }
+
+.login_div {
+   top: 50%;
+    left: 50%;
+    width: 500px;
+    height: 150px;
+    margin-top:  -70px; /*set to a negative number 1/2 of your height*/
+    margin-left: -250px; /*set to a negative number 1/2 of your width*/
+    border: 1px solid #ccc;
+    background-color: #f3f3f3;
+    position:fixed;
+    text-align: center;
+}
+.login_form {
+    width: 500px;
+/*    text-align: center; */
+    margin: auto auto;
+}
+.login_label {
+    width: 100px;
+    display: inline-block;
+}
