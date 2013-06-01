@@ -19,9 +19,12 @@ let posts_content ~date ~text ~exp =
 
 let subscribed_div name = div ~a:[a_style ""] [sprintf "you are subscribed on %s" name |> pcdata]
 let mutal_div      = div ~a:[a_style ""] [pcdata "you are mutal friends"]
-let add_friend_clicked = {int64->int64->[`Subscribed|`NoSubscription]->unit{
-  fun _ _ _ -> ()
-}}
+
+let make_onclick ~me friend =
+  {Dom_html.mouseEvent Js.t -> unit{ fun _ ->
+    ()
+  }}
+
 let page ~cur_user_id ~name ~id =
   let is_current_user = (cur_user_id = id) in
   Db_user.select_posts_of_user id >>= fun posts ->
@@ -46,7 +49,9 @@ let page ~cur_user_id ~name ~id =
       lwt bbb = Db_user.check_friend_status ~me:cur_user_id id >>= function
         | `NoSubscription ->
             div ~a:[a_id "profile_action_btn"]
-              [ div ~a:[a_class ["toggle_friend_btn"]] [pcdata "Toggle friend"]
+              [ div ~a:[ a_class ["toggle_friend_btn"]
+                       ; a_onclick (make_onclick cur_user_id id)]
+                  [pcdata "Toggle friend"]
               ] |> Lwt.return
         | `Mutal      -> Lwt.return mutal_div
         | `Subscribed -> subscribed_div name |> Lwt.return

@@ -67,7 +67,7 @@ let _ =
       )
     )
 
-let _ =
+let () =
   let friend_content o =
     div
       [ div ~a:[a_class ["user-id-placeholder"; "inl-b"; "al-l"; "fl-l"]] [pcdata (Int64.to_string o#id)]
@@ -77,27 +77,24 @@ let _ =
       ; div ~a:[a_class ["user-exp-placeholder";  "inl-b"; ]] [pcdata (Int32.to_string o#exp)]
     ] |> Lwt.return
   in
-  let f = authenticated_handler (fun (nick,id) () () ->
-    lwt friends_ids = Db_user.get_friends_by_id id in
-    lwt friends_info = Db_user.friends_of_user_by_id ~id in
-    lwt friends_content = Lwt_list.map_p friend_content friends_info in
-    Eliom_registration.Html5.send
-      (wrap_main_page
-         [div [div [pcdata (sprintf "friends of user %s(%s) will be listed here" nick (Int64.to_string id))]
-              ;br ()
-              ;div [pcdata "friends are:"]
-              ;div [pcdata (Core_list.to_string  ~f:Int64.to_string friends_ids)]
-              ; div friends_content
-              ]
-         ]
+  let f () () = begin
+    fun (nick,id) ->
+      lwt friends_ids = Db_user.get_friends_by_id id in
+      lwt friends_info = Db_user.friends_of_user_by_id ~id in
+      lwt friends_content = Lwt_list.map_p friend_content friends_info in
+      Lwt.return (wrap_main_page
+        [ div
+            [div [pcdata (sprintf "friends of user %s(%s) will be listed here" nick (Int64.to_string id))]
+            ; br ()
+            ; div [pcdata "friends are:"]
+            ; div [pcdata (Core_list.to_string  ~f:Int64.to_string friends_ids)]
+            ; div friends_content
+            ]
+        ]
       )
-    ) (fun _ () ->
-      print_endline "redirection";
-      Eliom_registration.Redirection.send main_service
-(*        Eliom_registration.Html5.send (wrap_main_page [pcdata "login please"]) *)
-  )
+    end |> Lwt.return
   in
-  Eliom_registration.Any.register ~service:myfriends_service f
+  WithDefault.register ~service:myfriends_service  (Lwt.return f)
 
 (* Show information about concrete user *)
 let _ =
