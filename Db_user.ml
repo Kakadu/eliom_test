@@ -62,6 +62,18 @@ let get_friends_by_id id : int64 list Lwt.t =
   Db.query <:select< {user_id = x.user_id; friend_id = x.friend_id } | x in $friends$; >>
   >|= (Core_list.filter_map ~f:(fun x -> if x#!user_id = id then Some (x#!friend_id) else None))
 
+let check_friend_status ~me friend_id =
+  lwt left = Db.view_opt
+    (<:view< x | x in $friends$; x.user_id = $int64:me$; x.friend_id = $int64:friend_id$ >>)
+    >|= Option.is_some in
+  if left then begin
+    lwt right = Db.view_opt
+      (<:view< x | x in $friends$; x.user_id = $int64:friend_id$; x.friend_id = $int64:me$ >>)
+      >|= Option.is_some in
+    Lwt.return (if right then `Mutal else `Subscribed)
+  end else Lwt.return `NoSubscription
+
+
 (* TODO: make select * from users  JOIN friends ON (users.id=friends.user_id);
     somehow *)
 

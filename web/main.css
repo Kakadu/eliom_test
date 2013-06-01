@@ -156,3 +156,41 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 .post_wizard_step23_input {
     width: 200px;
 }
+#profile_actions {
+    margin: 8px 0px 9px;
+    padding: 4px 8px;
+    background: #F2F2F2;
+    width: 250px;
+    display: inline-block;
+}
+#friend_status {
+    width: 200px;
+    margin-left: 3px;
+    padding-left: 3px;
+    display: inline-block;
+    margin-right: 15px;
+    padding-right: 15px;
+}
+#profile_action_btn {
+    display: block;
+    padding: 3px 0px;
+}
+.toggle_friend_btn {
+    border: 1px solid #4e6f93;
+    border-top-color: #517295;
+    background: #5D81A7;
+    color: #FFFFFF;
+    text-align: center;
+}
+.toggle_friend_btn button.hover {
+  border-top-color: #789ABF;
+  border-bottom-color: #5980A9;
+  border-left-color: #5980A9;
+  border-right-color: #5980A9;
+  color: #FFF;
+  text-shadow:0 1px 0 #45688E;
+  *border: 0;
+  background: url(/web/button_vk.png) #6181a6 repeat-x top;
+  background-position: 0px -16px;
+  *background-position: 0px -16px;
+}
