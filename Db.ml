@@ -22,6 +22,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 (* adopted from cumulus *)
 
 let (>>=) = Lwt.(>>=)
+external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
 
 module Lwt_thread = struct
   include Lwt
@@ -38,18 +39,21 @@ end
 
 type ('a, 'b) t = ('a, 'b) macaque_type Sql.t
 
-let connect () =
-  Lwt_PGOCaml.connect
-    ~database:"traktor"
-    ~host:"localhost"
-    ~password:"123"
-    ~user:"kakadu"
-    ~port:5434
-    ()
+module DBSettings = struct
+  let database = "traktor"
+  let host = "localhost"
+  let password = "123"
+  let user = "kakadu"
+  let port = 5434
+end
+
+let connect () : 'a Lwt_PGOCaml.t Lwt.t =
+  let open DBSettings in
+  Lwt_PGOCaml.connect ~database ~host ~password ~user ~port ()
 
 open Printf
 
-let do_search text =
+let search_skill_by_descr text =
     lwt dbh = connect () in
     let open Core.Std in
     let open Lwt_PGOCaml in
@@ -69,6 +73,28 @@ let do_search text =
     in
     let rows = s text in
     rows
+
+let search_in_materials where what =
+  lwt dbh = connect () in
+  let query =
+    sprintf "SELECT id,title,author FROM materials where to_tsvector(%s) @@ to_tsquery('%s')"
+      where what in
+  printf "query = %s\n%!" query;
+  let make a b c =
+    ( (match a with Some x -> Int64.of_string x | _ -> assert false),
+      (match b with Some s -> s | _ -> ""),
+      (match c with Some s -> s | _ -> "")
+    ) in
+  let f () =
+    lwt () = Lwt_PGOCaml.prepare dbh ~query () in
+    lwt xs = Lwt_PGOCaml.execute dbh ~params:[] () in
+    Core.Core_list.filter_map xs ~f:(function [a;b;c] -> Some (make  a b c) | _ -> None) |> Lwt.return
+  in
+  f ()
+
+let search_by_author = search_in_materials "author"
+let search_by_title  = search_in_materials "title"
+
 
 let validate db =
   Lwt.try_bind

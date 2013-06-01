@@ -22,7 +22,7 @@ let post_wizard = Eliom_service.service ~path:["test1"] ~get_params:Eliom_parame
 
   let suggestions query: rpc_res_t list Lwt.t =
     let open Lwt in
-    Db.do_search query  >|= (List.map (fun o -> (o#maxexp,o#descr,o#id)))
+    Db.search_skill_by_descr query  >|= (List.map (fun o -> (o#maxexp,o#descr,o#id)))
 
   let rpc_make_suggestions
       : (string, rpc_res_t list)
@@ -63,6 +63,7 @@ let wizard1_handler () () =
                           ~a:[]
                           rpc_make_suggestions
                           template_rpc
+                          {unit->unit{ fun () -> () }}
                           {unit->unit{
                             fun _ev -> Firebug.console##log (Js.string "onselected")
                            }}

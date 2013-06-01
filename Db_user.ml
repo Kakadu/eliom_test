@@ -131,6 +131,11 @@ let update_user_feeds_per_page ~userid ~nb_feeds () =
 *)
 
 let posts_id_seq = (<:sequence< bigserial "posts_id_seq" >>)
+let last_inserted_post_id (): int64 =
+  let open Db.DBSettings in
+  let dbh = Query.Db.connect ~user ~password ~host ~port ~database () in
+  Query.value dbh (<:value< currval $users_id_seq$ >>)
+
 
 let posts = (<:table< posts (
   id               bigint    NOT NULL DEFAULT(nextval $posts_id_seq$),
@@ -191,3 +196,42 @@ let parent_skills =  (<:table< parent_skills (
 let get_skill_links () =
   Db.view <:view< x | x in $parent_skills$ >>
   >|= (Core_list.map ~f:(fun o -> (o#!child_id, o#?parent_id)))
+
+let materials_id_seq = (<:sequence< bigserial "materials_id_seq" >>)
+let last_inserted_material_id (): int64 =
+  let open Db.DBSettings in
+  let dbh = Query.Db.connect ~user ~password ~host ~port ~database () in
+  Query.value dbh (<:value< currval $materials_id_seq$ >>)
+
+let materials =  (<:table< materials (
+  id               bigint    NOT NULL DEFAULT(nextval $materials_id_seq$),
+  title            text      NOT NULL,
+  author           text      NOT NULL,
+  exp              integer   NOT NULL,
+  profit           integer   NOT NULL,
+  sort_id          bigint    NOT NULL,
+  skill_id         bigint    NOT NULL
+) >>)
+
+let add_material ~title ~author ?(profit=Int32.zero) ?(sort_id=Int64.zero)  ?(exp=100l) ~skill_id =
+  Db.query (<:insert< $materials$ := {
+    id               = materials?id;
+    title            = $string:title$;
+    author           = $string:author$;
+    exp              = $int32:exp$;
+    profit           = $int32:profit$;
+    sort_id          = $int64:sort_id$;
+    skill_id         = $int64:skill_id$
+  } >>)
+
+let find_material ~author ~title =
+  Db.view_opt
+    (<:view< {
+      u.id;
+      u.title;
+      u.author;
+     } | u in $materials$;
+    u.title = $string:title$;
+    u.author = $string:author$
+    >>)
+  >|= (function Some o -> Some (o#!id) | None -> None)

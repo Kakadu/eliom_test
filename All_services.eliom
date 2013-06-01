@@ -50,7 +50,7 @@ let user_n_id: (string*int64) option Eliom_reference.eref =
   Eliom_reference.eref ~scope:Eliom_common.default_session_scope None
 let wrong_pwd = Eliom_reference.eref ~scope:Eliom_common.request_scope false
 
-let authenticated_handler ok bad =
+let authenticated_handler ok bad : 'get -> 'post -> 'res Lwt.t =
   Eliom_tools.wrap_handler (fun () -> Eliom_reference.get user_n_id) bad ok
 
 let view_skills =
