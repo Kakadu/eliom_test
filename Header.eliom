@@ -2,23 +2,18 @@ open Eliom_content.Html5.D
 open Eliom_parameter
 open All_services
 
-let svg_title =
-  let open Eliom_content.Svg.D in
-  [ ellipse ~a:[a_rx (60.,None); a_ry (20.,None); a_cx (60.,None); a_cy (20.,None) ] []
-(*  ; text ~a:[a_dx [(20.,Some `Px)]; a_dy [(30., Some `Px)] ] [text [pcdata "text"]] *)
-
-  ]
-
 let search_bar =
   div ~a:[a_id "top_section"]
-    [ div ~a:[a_class ["svg_logo"]] [svg svg_title]
-(*    ; post_form search_service
-      (fun _ -> [fieldset
-		            [string_input
-                      ~input_type:`Text ~value:"Search" ()]]) ()
-*)
-    ; div ~a:[a_class ["innertube"] ]
-      [h1 [pcdata "CSS Liquid Layout #2.1- (Fixed-Fluid) searchbar"]]
+    [ img ~a:[a_class ["svg_logo"]] ~alt:""
+        ~src:(make_uri (Eliom_service.static_dir ()) ["logo.png"]) ()
+    ; pcdata "Одинокий тракторист"
+    ; form ~a:[a_id "search_form"] ~service:search_service (fun name ->
+      [fieldset  ~a:[a_id "search_form_fieldset"]
+		  [ string_input ~input_type:`Text    ~a:[a_id "search_input"] ~name ~value:"Search" ()
+          ; button       ~button_type:`Submit ~a:[a_id "search_btn"]   [pcdata "Publish"]
+          ]
+      ]
+    )
   ]
 
 let menu_bar ~home_service  =
