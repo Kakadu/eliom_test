@@ -11,13 +11,6 @@ open Lwt
 
 external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
 
-(* Page widgets: *)
-let disconnect_box () =
-  post_form disconnection_service
-    (fun _ -> [fieldset
-		  [string_input
-                      ~input_type:`Submit ~value:"Log out" ()]]) ()
-
 let create_account_form () =
   post_form ~service:account_confirmation_service
     (fun (name1, name2) ->
@@ -49,7 +42,7 @@ let wrap_main_page xs =
               ; div ~a:[a_id "contentwrapper"]
                 [ div ~a:[a_id "contentcolumn"; a_class ["innertube"]] xs
                 ]
-              ; Header.menu_bar ~home_service:main_service ~disconnection_service
+              ; Header.menu_bar ~home_service:main_service
               ]
           ]
     )
@@ -94,26 +87,26 @@ let () =
       )
     end |> Lwt.return
   in
-  WithDefault.register ~service:myfriends_service  (Lwt.return f)
+  WithDefault.register ~service:myfriends_service f
 
 (* Show information about concrete user *)
-let _ =
-  Eliom_registration.Any.register ~service:user_service (fun name () ->
-    Db_user.get_user_by_name name >>= fun is_known ->
-    match is_known with
-      | Some o ->
-          let on_logged_in (_,cur_user_id) =
-            Userpage.page ~cur_user_id ~name:o#nick ~id:o#id >|= fun page ->
-              wrap_main_page [div page]
-          in
-          authenticated_handler (fun info () () -> on_logged_in info >>= Eliom_registration.Html5.send )
-            (fun _ () -> Eliom_registration.Redirection.send main_service) () ()
-      | None   ->
-          Eliom_registration.Html5.send
-            (html page_head
-               (body [h1 [pcdata "404"];
-                      p [pcdata "That page does not exist"]]))
-    )
+let () =
+  let f name () = begin
+    fun (nick,id) ->
+      Db_user.get_user_by_name name >>= fun is_known ->
+      match is_known with
+        | Some o ->
+            let on_logged_in (_,cur_user_id) =
+              Userpage.page ~cur_user_id ~name:o#nick ~id:o#id >|= fun page -> wrap_main_page [div page]
+            in
+            on_logged_in (nick,id)
+        | None   ->
+            Lwt.return
+              (html page_head
+                 (body [h1 [pcdata "404"];
+                        p [pcdata "That page does not exist"]]))
+  end |> Lwt.return in
+  WithDefault.register ~service:user_service f
 
 let _ =
   Eliom_registration.Action.register
@@ -132,10 +125,6 @@ let _ =
             flush stdout;
             raise exn
     );
-
-  Eliom_registration.Action.register
-    ~service:disconnection_service
-    (fun () () -> Eliom_state.discard ~scope:Eliom_common.default_session_scope ());
 
   App.register ~service:new_user_form_service
     (fun () () ->

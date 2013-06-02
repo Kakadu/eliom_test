@@ -1,12 +1,17 @@
 open Eliom_content.Html5.D
 open Eliom_parameter
 open Core
-open Printf
 open Lwt
 open All_services
 
-external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
-
+{shared{
+  open Printf
+  external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
+}}
+{client{
+  open Lwt
+  let firelog s = Firebug.console##log (Js.string s)
+}}
 (* doc about calendar lib: http://calendar.forge.ocamlcore.org/doc/Printer.html *)
 let posts_content ~date ~text ~exp =
   div [ div ~a:[a_class ["inl-b"; "post-date-placeholder"]]
@@ -16,13 +21,44 @@ let posts_content ~date ~text ~exp =
       ]
   |> Lwt.return
 
+let add_friend_rpc =
+  let add_friend_link (me, id) = Db_user.add_friend_link ~me id in
+  server_function Json.t<int64*int64> add_friend_link
+
+let check_friend_status_rpc =
+  let f (me,id) = Db_user.check_friend_status ~me id in
+  server_function Json.t<int64*int64> f
 
 let subscribed_div name = div ~a:[a_style ""] [sprintf "you are subscribed on %s" name |> pcdata]
 let mutal_div      = div ~a:[a_style ""] [pcdata "you are mutal friends"]
+let profile_action_btn_id =  "profile_action_btn"
 
-let make_onclick ~me friend =
+let make_onclick ~me friend friend_name =
   {Dom_html.mouseEvent Js.t -> unit{ fun _ ->
-    ()
+    Firebug.console##log (Js.string "onclick");
+    %add_friend_rpc (%me, %friend) |> Lwt.ignore_result;
+    let el = Js.Opt.get
+      (Dom_html.document##getElementById (Js.string %profile_action_btn_id))
+      (fun () -> assert false) in
+    let open Eliom_content.Html5 in
+    let e' = Of_dom.of_element el in
+    Manip.removeAllChild e';
+    firelog "here";
+    let () =
+      try
+        begin
+          %check_friend_status_rpc (%friend,%me)
+          >|= (function
+            | `NoSubscription ->
+                D.div [sprintf "you are subscribed on %s" %friend_name |> D.pcdata]
+            | `Mutal -> assert false
+            | `Subscribed ->
+                D.div [sprintf "you are mutal friends" |> D.pcdata])
+           >|= fun ans -> Manip.appendChild e' ans
+        end |> Lwt.ignore_result
+      with exn -> firelog (Printexc.to_string exn)
+    in
+    firelog "here2"
   }}
 
 let page ~cur_user_id ~name ~id =
@@ -35,7 +71,7 @@ let page ~cur_user_id ~name ~id =
     let avatar = img ~a:[a_class ["user-avatar"]] ~alt:""
       ~src:(make_uri (Eliom_service.static_dir ()) ["demo_avatar.jpg"]) () in
     let info =
-      div ~a:[a_class ["inl-b"]; a_style ""]
+      div ~a:[a_class ["inl-b"]]
         [ div ~a:[a_class ["user-text-info-container"]]
             [ div ~a:[a_class []] [pcdata name]
             ; div ~a:[a_class []] [pcdata "много лет"]
@@ -48,11 +84,12 @@ let page ~cur_user_id ~name ~id =
     else
       lwt bbb = Db_user.check_friend_status ~me:cur_user_id id >>= function
         | `NoSubscription ->
-            div ~a:[a_id "profile_action_btn"]
+            let d = div ~a:[a_id profile_action_btn_id]
               [ div ~a:[ a_class ["toggle_friend_btn"]
-                       ; a_onclick (make_onclick cur_user_id id)]
+                       ; a_onclick (make_onclick ~me:cur_user_id id name)]
                   [pcdata "Toggle friend"]
-              ] |> Lwt.return
+              ]
+            in Lwt.return d
         | `Mutal      -> Lwt.return mutal_div
         | `Subscribed -> subscribed_div name |> Lwt.return
       in

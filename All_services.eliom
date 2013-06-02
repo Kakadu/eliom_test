@@ -4,6 +4,9 @@ open Eliom_parameter
 {shared{
 external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
 }}
+{client{
+  let firelog s = Firebug.console##log (Js.string s)
+ }}
 
 (* Services *)
 let main_service = Eliom_service.service ~path:[""] ~get_params:unit ()
@@ -19,8 +22,6 @@ let connection_service =
     ~fallback:main_service
     ~post_params:(string "name" ** string "password")
     ()
-
-let disconnection_service = Eliom_service.post_coservice' ~post_params:unit ()
 
 let new_user_form_service = Eliom_service.service ~path:["create account"] ~get_params:unit ()
 
@@ -139,3 +140,11 @@ module LoginForm = struct
 end
 
 module WithDefault = Connected(LoginForm)(App)
+
+let disconnection_service = Eliom_service.coservice ~fallback:main_service ~get_params:unit ()
+
+let () = WithDefault.Wrap.action_with_redir_register ~service:disconnection_service
+  (fun (nick,_) () () ->
+    Eliom_state.discard ~scope:Eliom_common.default_session_scope ();
+    Lwt.return ()
+  )

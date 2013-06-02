@@ -73,6 +73,8 @@ let check_friend_status ~me friend_id =
     Lwt.return (if right then `Mutal else `Subscribed)
   end else Lwt.return `NoSubscription
 
+let add_friend_link ~me id =
+  Db.query (<:insert< $friends$ := { user_id = $int64:me$; friend_id = $int64:id$ } >>)
 
 (* TODO: make select * from users  JOIN friends ON (users.id=friends.user_id);
     somehow *)
