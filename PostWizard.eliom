@@ -169,7 +169,7 @@ and wizard2_handler () (area_name, area_id) =
           (string "author") **
           (string "comment") **
           (int32  "experience") **
-          (opt (int64 "material_id"))
+          (neopt (int64 "material_id"))
         )
         (wizard3_handler area_name area_id) in
     printf "area_name = %s \n%!" area_name;
@@ -291,8 +291,8 @@ and wizard4_handler skill_id ~title ~author ~exp ~comment material_id (nick,user
       | None ->
           printf "Adding new material\n%!";
           (* We will add new material *)
-          lwt () = Db_user.add_material ~title ~author ~exp ~skill_id ~profit:0l ~sort_id:Int64.zero in
-          Db_user.last_inserted_material_id () |> Lwt.return
+          Db_user.add_material ~title ~author ~exp ~skill_id ~profit:0l ~sort_id:Int64.zero
+          (*Db_user.last_inserted_material_id () |> Lwt.return*)
    in
    lwt () = Db_user.add_post ~text:comment ~exp ~material_id ~userid in
    Lwt.return ()

@@ -3,6 +3,7 @@ module Option = Eliom_lib.Option
 
 let (>>=) = Lwt.(>>=)
 let (>|=) = Lwt.(>|=)
+external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"
 
 let users_id_seq = (<:sequence< bigserial "users_id_seq" >>)
 
@@ -148,7 +149,7 @@ let posts_id_seq = (<:sequence< bigserial "posts_id_seq" >>)
 let last_inserted_post_id (): int64 =
   let open Db.DBSettings in
   let dbh = Query.Db.connect ~user ~password ~host ~port ~database () in
-  Query.value dbh (<:value< currval $users_id_seq$ >>)
+  Query.value dbh (<:value< currval $posts_id_seq$ >>)
 
 
 let posts = (<:table< posts (
@@ -213,6 +214,7 @@ let get_skill_links () =
 
 let materials_id_seq = (<:sequence< bigserial "materials_id_seq" >>)
 let last_inserted_material_id (): int64 =
+  print_endline "last_inserted_material_id";
   let open Db.DBSettings in
   let dbh = Query.Db.connect ~user ~password ~host ~port ~database () in
   Query.value dbh (<:value< currval $materials_id_seq$ >>)
@@ -228,6 +230,7 @@ let materials =  (<:table< materials (
 ) >>)
 
 let add_material ~title ~author ?(profit=Int32.zero) ?(sort_id=Int64.zero)  ?(exp=100l) ~skill_id =
+ lwt () =
   Db.query (<:insert< $materials$ := {
     id               = materials?id;
     title            = $string:title$;
@@ -237,6 +240,11 @@ let add_material ~title ~author ?(profit=Int32.zero) ?(sort_id=Int64.zero)  ?(ex
     sort_id          = $int64:sort_id$;
     skill_id         = $int64:skill_id$
   } >>)
+ in
+ let open Db.DBSettings in
+ let dbh = Query.Db.connect ~user ~password ~host ~port ~database () in
+(* lwt dbh = Db.connect () in *)
+ Query.value dbh (<:value< currval $materials_id_seq$ >>) |> Lwt.return
 
 let find_material ~author ~title =
   Db.view_opt

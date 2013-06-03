@@ -84,5 +84,5 @@ val get_skill_links: unit -> (int64*(int64 option)) list Lwt.t
 val find_material: author:string -> title:string  -> int64 option Lwt.t
 val add_material:
   title:string -> author:string -> ?profit:Int32.t -> ?sort_id:Int64.t ->
-  ?exp:int32 -> skill_id:int64 -> unit Lwt.t
+  ?exp:int32 -> skill_id:int64 -> int64 Lwt.t
 val last_inserted_material_id: unit -> int64
