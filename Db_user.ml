@@ -151,7 +151,6 @@ let last_inserted_post_id (): int64 =
   let dbh = Query.Db.connect ~user ~password ~host ~port ~database () in
   Query.value dbh (<:value< currval $posts_id_seq$ >>)
 
-
 let posts = (<:table< posts (
   id               bigint    NOT NULL DEFAULT(nextval $posts_id_seq$),
   user_id          bigint    NOT NULL,
@@ -230,21 +229,18 @@ let materials =  (<:table< materials (
 ) >>)
 
 let add_material ~title ~author ?(profit=Int32.zero) ?(sort_id=Int64.zero)  ?(exp=100l) ~skill_id =
- lwt () =
-  Db.query (<:insert< $materials$ := {
-    id               = materials?id;
-    title            = $string:title$;
-    author           = $string:author$;
-    exp              = $int32:exp$;
-    profit           = $int32:profit$;
-    sort_id          = $int64:sort_id$;
-    skill_id         = $int64:skill_id$
-  } >>)
+  lwt () =
+    Db.query (<:insert< $materials$ := {
+      id               = materials?id;
+      title            = $string:title$;
+      author           = $string:author$;
+      exp              = $int32:exp$;
+      profit           = $int32:profit$;
+      sort_id          = $int64:sort_id$;
+      skill_id         = $int64:skill_id$
+    } >>)
  in
- let open Db.DBSettings in
- let dbh = Query.Db.connect ~user ~password ~host ~port ~database () in
-(* lwt dbh = Db.connect () in *)
- Query.value dbh (<:value< currval $materials_id_seq$ >>) |> Lwt.return
+ Db.value (<:value< currval $materials_id_seq$ >>)
 
 let find_material ~author ~title =
   Db.view_opt
