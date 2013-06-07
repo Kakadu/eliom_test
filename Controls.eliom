@@ -65,7 +65,13 @@ let text_with_suggestions ~container ~name ~a get_suggestions template on_show_s
       );
       Lwt.return ()
     in
-    Lwt_js_events.inputs my_input on_text_input |> Lwt.ignore_result
+    begin(*
+      lwt () = Lwt_js_events.(keypresses ~use_capture:true my_input (fun ev _ ->
+        firelog (sprintf "here %d, text = %s" (ev##keyCode) (Js.to_string my_input##value) );
+        Lwt.return (if ev##keyCode <> 13 then Dom_html.stopPropagation ev)
+      )) in *)
+      Lwt_js_events.inputs my_input on_text_input
+    end |> Lwt.ignore_result
   }};
   ans
 (*

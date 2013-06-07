@@ -63,11 +63,9 @@ let _ =
 let () =
   let friend_content o =
     div
-      [ div ~a:[a_class ["user-id-placeholder"; "inl-b"; "al-l"; "fl-l"]] [pcdata (Int64.to_string o#id)]
-      ; div ~a:[a_class ["user-nick-placeholder"; "inl-b"]]
+      [ div ~a:[a_class ["user-nick-placeholder"; "inl-b"]]
         [ a ~service:user_service [pcdata o#nick] o#nick
         ]
-      ; div ~a:[a_class ["user-exp-placeholder";  "inl-b"; ]] [pcdata (Int32.to_string o#exp)]
     ] |> Lwt.return
   in
   let f () () = begin
@@ -77,10 +75,7 @@ let () =
       lwt friends_content = Lwt_list.map_p friend_content friends_info in
       Lwt.return (wrap_main_page
         [ div
-            [div [pcdata (sprintf "friends of user %s(%s) will be listed here" nick (Int64.to_string id))]
-            ; br ()
-            ; div [pcdata "friends are:"]
-            ; div [pcdata (Core_list.to_string  ~f:Int64.to_string friends_ids)]
+            [ div [pcdata "Your friends are:"]
             ; div friends_content
             ]
         ]
@@ -162,7 +157,7 @@ let _ =
            )
         )
     )
-
+(*
 let _ =
   Eliom_registration.Action.register ~service:append_feed (fun () (text,exp) ->
     print_endline ("appending feed: "^ text);
@@ -170,3 +165,4 @@ let _ =
     >>= fun (nick,userid) ->
     Db_user.add_post ~userid ~text ~material_id:Int64.one ~exp
   )
+  *)

@@ -61,9 +61,16 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 }
 .post-date-placeholder {
     width: 200px;
+    text-align: center;
 }
 .post-comment-placeholder {
     width: 400px;
+}
+.post-author-placeholder {
+    width: 70px;
+}
+.post-action-placeholder {
+    width: 300px;
 }
 .post-exp-placeholder {
     width: 80px;
@@ -155,6 +162,16 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 .post_wizard_step23_input {
     width: 200px;
 }
+#post_wizard_action_input {
+    width: 150px;
+}
+.post_wizard_comment_textarea {
+    width: 350px;
+    height: 50px;
+}
+#material_input_id {
+
+}
 #profile_actions {
     margin: 8px 0px 9px;
     padding: 4px 8px;
@@ -232,4 +249,9 @@ margin-left: 200px; /*Set left margin to LeftColumnWidth*/
 #search_form_fieldset {
     padding: 0 0 0 0px;
     height: 29px;
+}
+.hint_label {
+    font-size: 12px;
+    color: gray;
+    padding-left: 5px;
 }

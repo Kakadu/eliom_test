@@ -22,6 +22,7 @@ CREATE TABLE friends (
 drop table if exists posts;
 create table posts (
     id                  BIGSERIAL NOT NULL PRIMARY KEY,
+    action_text         TEXT NOT NULL,
     user_id             integer NOT NULL,
     material_id         integer NOT NULL,
     exp                 integer NOT NULL,

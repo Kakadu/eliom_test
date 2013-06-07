@@ -75,9 +75,13 @@ val update_user_feeds_per_page :
 *)
 val select_posts_of_user: int64 ->
   < comments : string; date_of_creation : Sql_base.timestamp; exp : int32; id : int64; material_id : int64 >
-         Core.Core_list.t Lwt.t
+         list Lwt.t
 
-val add_post: userid:int64 -> text: string -> exp:int32 -> material_id:int64 -> unit Lwt.t
+val select_posts_of_user2: int64 ->
+  < comments: string; date_of_creation: Sql_base.timestamp; exp: int32; title: string; author: string;
+    action: string > list Lwt.t
+
+val add_post: action:string -> userid:int64 -> text: string -> exp:int32 -> material_id:int64 -> unit Lwt.t
 
 val all_skills: unit -> <id: int64; descr: string > list Lwt.t
 val get_skill_links: unit -> (int64*(int64 option)) list Lwt.t
@@ -85,4 +89,8 @@ val find_material: author:string -> title:string  -> int64 option Lwt.t
 val add_material:
   title:string -> author:string -> ?profit:Int32.t -> ?sort_id:Int64.t ->
   ?exp:int32 -> skill_id:int64 -> int64 Lwt.t
-val last_inserted_material_id: unit -> int64
+
+val last_inserted_material_id: unit -> int64 Lwt.t
+val user_skills_info
+  : int64 ->
+  < count: int64; sum: int32; skill_id: int64; text: string; maxexp: int32 > list Lwt.t

@@ -153,6 +153,7 @@ let last_inserted_post_id (): int64 =
 
 let posts = (<:table< posts (
   id               bigint    NOT NULL DEFAULT(nextval $posts_id_seq$),
+  action_text      text      NOT NULL,
   user_id          bigint    NOT NULL,
   material_id      bigint    NOT NULL,
   exp              integer   NOT NULL,
@@ -179,10 +180,40 @@ let select_posts_of_user id : _ list Lwt.t =
                          end)
   )
 
+let materials_id_seq = (<:sequence< bigserial "materials_id_seq" >>)
+let last_inserted_material_id (): int64 Lwt.t =
+  Db.value (<:value< currval $materials_id_seq$ >>)
 
-let add_post ~userid ~text ~exp ~material_id =
+let materials =  (<:table< materials (
+  id               bigint    NOT NULL DEFAULT(nextval $materials_id_seq$),
+  title            text      NOT NULL,
+  author           text      NOT NULL,
+  exp              integer   NOT NULL,
+  profit           integer   NOT NULL,
+  sort_id          bigint    NOT NULL,
+  skill_id         bigint    NOT NULL
+) >>)
+
+let select_posts_of_user2 id : _ list Lwt.t =
+  Db.view <:view<
+    { x.exp; x.comments; x.date_of_creation; y.title; y.author } order by x.date_of_creation desc
+    | x in $posts$; y in $materials$; x.material_id = y.id; x.user_id = $int64:id$ >>
+  >|= (Core_list.map ~f:(fun x ->
+                         object
+                           method exp      = x#!exp
+                           method comments = x#!comments
+                           method date_of_creation = x#!date_of_creation
+                           method title    = x#!title
+                           method author   = x#!author
+                           method action   = "actioned"
+                         end)
+  )
+
+
+let add_post ~action ~userid ~text ~exp ~material_id =
   Db.query (<:insert< $posts$ := {
     id               = posts?id;
+    action_text      = $string:action$;
     user_id          = $int64:userid$;
     material_id      = $int64:material_id$;
     exp              = $int32:exp$;
@@ -211,23 +242,6 @@ let get_skill_links () =
   Db.view <:view< x | x in $parent_skills$ >>
   >|= (Core_list.map ~f:(fun o -> (o#!child_id, o#?parent_id)))
 
-let materials_id_seq = (<:sequence< bigserial "materials_id_seq" >>)
-let last_inserted_material_id (): int64 =
-  print_endline "last_inserted_material_id";
-  let open Db.DBSettings in
-  let dbh = Query.Db.connect ~user ~password ~host ~port ~database () in
-  Query.value dbh (<:value< currval $materials_id_seq$ >>)
-
-let materials =  (<:table< materials (
-  id               bigint    NOT NULL DEFAULT(nextval $materials_id_seq$),
-  title            text      NOT NULL,
-  author           text      NOT NULL,
-  exp              integer   NOT NULL,
-  profit           integer   NOT NULL,
-  sort_id          bigint    NOT NULL,
-  skill_id         bigint    NOT NULL
-) >>)
-
 let add_material ~title ~author ?(profit=Int32.zero) ?(sort_id=Int64.zero)  ?(exp=100l) ~skill_id =
   lwt () =
     Db.query (<:insert< $materials$ := {
@@ -253,3 +267,25 @@ let find_material ~author ~title =
     u.author = $string:author$
     >>)
   >|= (function Some o -> Some (o#!id) | None -> None)
+
+let user_skills_info user_id =
+  let v =
+    <:view< { s.descr; p.exp; s.id; s.maxexp }
+    | s in $skills$; p in $posts$; m in $materials$;
+      s.id = m.skill_id;
+      p.material_id = m.id;
+      p.user_id = $int64:user_id$; >>
+  in
+  let v' =
+    <:view< group { count=count[x.exp]; sum=sum[x.exp]; }
+               by { skill_id=x.id; descr = x.descr; x.maxexp }
+               order by x.id desc | x in $v$ >>
+  in
+  Db.view (<:view< x order by x.sum desc | x in $v'$ >>)
+  >|= List.map (fun o -> object
+    method count  = o#!count
+    method sum    = match o#?sum with None -> 0l | Some x -> x
+    method skill_id   = o#!skill_id
+    method text   = o#!descr
+    method maxexp = o#!maxexp
+  end)
