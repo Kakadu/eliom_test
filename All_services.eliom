@@ -128,9 +128,9 @@ module LoginForm = struct
                (fun (name1, name2) ->
                  [fieldset
 		             [ div ~a:[a_class ["login_label"]] [label ~a:[a_for name1] [pcdata "Login:"]]
-                     ; string_input ~input_type:`Text ~name:name1 (); br ()
+                     ; string_input ~input_type:`Text ~value:"Kakadu" ~name:name1 (); br ()
                      ; div ~a:[a_class ["login_label"]] [label ~a:[a_for name2] [pcdata "Password:"]]
-                     ; string_input ~input_type:`Password ~name:name2 (); br ()
+                     ; string_input ~input_type:`Password ~value:"123" ~name:name2 (); br ()
                      ; string_input ~input_type:`Submit ~value:"Connect" ()
                      ]
                  ]) ()
