@@ -169,7 +169,7 @@ and wizard2_handler () (area_name, area_id) =
         ~scope:Eliom_common.default_session_scope
         ~fallback:main_service
         ~post_params:Eliom_parameter.(
-(*          (string "action") ** *)
+          (string "action") **
           (string "title") **
           (string "author") **
           (string "comment") **
@@ -258,9 +258,9 @@ and wizard2_handler () (area_name, area_id) =
       (wrap_main_page
          [ h2 [pcdata (sprintf "Step 2/3: upgrading skill '%s'" area_name)]
          ; post_form ~a:[a_onload check_correctness] ~service:wizard3_service
-           (fun ((title,(author, (comment,(exp,material_id_name)))) ) ->
+           (fun (action,(title,(author, (comment,(exp,material_id_name)))) ) ->
              [ make_label "Action:"
-             ; string_input ~input_type:`Text ~value:"xxx" (* ~name:action *)
+             ; string_input ~input_type:`Text ~value:"xxx"  ~name:action
                ~a:[a_onblur check_correctness; a_id post_wizard_action_input_id] ()
              ; hint_label "done, created, visited..."
              ; br ()
@@ -293,7 +293,7 @@ and wizard2_handler () (area_name, area_id) =
          ]
       )
 
-and wizard3_handler area_name area_id () (title,(author, (comment,(exp,material_id))))  =
+and wizard3_handler area_name area_id () (action,(title,(author, (comment,(exp,material_id)))))  =
   let wizard4_service = Eliom_service.post_coservice
         ~fallback:main_service
         ~post_params: Eliom_parameter.unit ()
