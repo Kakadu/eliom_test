@@ -289,3 +289,7 @@ let user_skills_info user_id =
     method text   = o#!descr
     method maxexp = o#!maxexp
   end)
+
+let add_skill ~name ~parent_id =
+  print_endline "adding skill here";
+  Lwt.return ()

@@ -94,3 +94,5 @@ val last_inserted_material_id: unit -> int64 Lwt.t
 val user_skills_info
   : int64 ->
   < count: int64; sum: int32; skill_id: int64; text: string; maxexp: int32 > list Lwt.t
+
+val add_skill: name:string -> parent_id:int64 -> unit Lwt.t

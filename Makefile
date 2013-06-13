@@ -12,7 +12,7 @@ client:
 	$(ocamlbuild) $(main_client)
 
 run:
-	ocsigenserver -c ocsigen.conf -V
+	ocsigenserver -c ocsigen.conf #-V
 
 run.opt:
 	ocsigenserver.opt -c ocsigen.conf
