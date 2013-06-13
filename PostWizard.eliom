@@ -60,6 +60,8 @@ open Main
     server_function Json.t<string> suggestions_skill
 }}
 
+let hint_label text = label ~a:[a_class ["hint_label"]] [pcdata text]
+
 {client{
   let show_suggestions = ref true
   let showhide_element_by_id ~value id =
@@ -152,6 +154,7 @@ let rec wizard1_handler _get _post (*: ('a, 'b) Eliom_registration.kind Lwt.t *)
                   template_skill_rpc
                   on_show_suggestions_div
                   on_selected
+              ; hint_label "Write 'OCaml' for example"; br()
               ; submit_form_btn
               ; br ()
               ; container
@@ -250,7 +253,6 @@ and wizard2_handler () (area_name, area_id) =
     let make_label text = label ~a:[a_style "padding-right: 5px;"] [pcdata text] in
     let make_int32_input id name = int32_input ~input_type:`Number  ~value:Int32.one ~name
       ~a:[a_id id; a_class ["post_wizard_step23_input"]] () in
-    let hint_label text = label ~a:[a_class ["hint_label"]] [pcdata text] in
 
     Lwt.return
       (wrap_main_page
