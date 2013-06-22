@@ -169,7 +169,7 @@ and wizard2_handler () (area_name, area_id) =
         ~scope:Eliom_common.default_session_scope
         ~fallback:main_service
         ~post_params:Eliom_parameter.(
-          (string "action") **
+          (string "skill_action") **
           (string "title") **
           (string "author") **
           (string "comment") **
@@ -299,7 +299,6 @@ and wizard3_handler area_name area_id () (action,(title,(author, (comment,(exp,m
         ~post_params: Eliom_parameter.unit ()
   in
   print_endline "wizard3_handler";
-  let action = "action" in
   let () = WithDefault.Wrap.action_with_redir_register ~service:wizard4_service
     (wizard4_handler area_id ~title ~action ~comment ~author ~exp material_id)
   in

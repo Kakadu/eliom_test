@@ -196,7 +196,8 @@ let materials =  (<:table< materials (
 
 let select_posts_of_user2 id : _ list Lwt.t =
   Db.view <:view<
-    { x.exp; x.comments; x.date_of_creation; y.title; y.author } order by x.date_of_creation desc
+    { x.action_text; x.exp; x.comments; x.date_of_creation; y.title; y.author }
+    order by x.date_of_creation desc
     | x in $posts$; y in $materials$; x.material_id = y.id; x.user_id = $int64:id$ >>
   >|= (Core_list.map ~f:(fun x ->
                          object
@@ -205,7 +206,7 @@ let select_posts_of_user2 id : _ list Lwt.t =
                            method date_of_creation = x#!date_of_creation
                            method title    = x#!title
                            method author   = x#!author
-                           method action   = "actioned"
+                           method action   = x#!action_text
                          end)
   )
 
