@@ -2,18 +2,13 @@ open All_services
 open Eliom_content.Html5.D
 open Printf
 
-module G = Graph.Imperative.Digraph.Concrete(Core.Std.Int64)
-open Core.Std
-module IS64 = Set.Make(Int64)
-module IM64 = Map.Make(Int64)
-
 {server{
-  let add_skill (name,parent_id) =
-    lwt _ = Db_user.add_skill ~name ~parent_id in
+  let add_skill (name,parent_id,maxexp) =
+    lwt _ = Db_user.add_skill ~name ~parent_id ~maxexp in
     Lwt.return ()
 
-  let add_skill_rpc : (string*int64, unit) Eliom_pervasives.server_function
-      = server_function Json.t<string*int64> add_skill
+  let add_skill_rpc : (string*int64*int32, unit) Eliom_pervasives.server_function
+      = server_function Json.t<string*int64*int32> add_skill
 }}
 
 {client{
@@ -27,54 +22,64 @@ module IM64 = Map.Make(Int64)
    let firelog s = Firebug.console##log (Js.string s)
 }}
 
-let describe ~text ~id =
-  pcdata (sprintf "%s %s" (Int64.to_string id) text)
+let describe ~text ~id ~maxexp =
+  pcdata (sprintf "%s %s(%s)" (Int64.to_string id) text (Int32.to_string maxexp))
 
-let template ~depth ~text ~id xs =
+let template ~depth ~text ~id ~maxexp xs =
   let onclick = {Dom_html.mouseEvent Js.t -> unit { fun _ ->
     let s = myWin##prompt (Js.string "Enter new material:", Js.string "here") |> Opt.to_option in
-    match s with
-      | Some name ->
-          let _name = Js.to_string name in
-          Lwt.ignore_result ((*lwt () = %add_skill_rpc (_name,%id) in
-                            location##reload*) () |> Lwt.return)
-      | None  -> firelog "No data"
+    let s'= myWin##prompt (Js.string "Enter maximal expreince:", Js.string "100") |> Opt.to_option in
+    try
+      let maxexp = match s' with Some s -> Some (s |> Js.to_string |> Int32.of_string) | _ -> None in
+      match (s,maxexp) with
+        | (Some name, Some maxexp)  ->
+            let _name = Js.to_string name in
+            Lwt.ignore_result (lwt () = %add_skill_rpc (_name,%id,maxexp) in
+                              location##reload () |> Lwt.return)
+        | ____________  -> firelog "No data"
+    with Failure _ -> firelog "can't convert string to int32"
   }} in
   let add_btn = img ~a:[a_class ["img_btn"]; a_onclick onclick] ~alt:""
     ~src:(make_uri (Eliom_service.static_dir ()) ["archive-insert-3.png"]) () in
 
-  div ~a:[a_style (sprintf "margin-left: %dpx;" (depth*5))] ((describe ~text ~id):: add_btn :: (br()) :: xs)
+  let skill_info  = describe ~text ~id ~maxexp in
+  div ~a:[a_style (sprintf "margin-left: %dpx;" (depth*5))] (skill_info :: add_btn :: (br()) :: xs)
 
-let build roots info g: (_ Eliom_content.Html5.D.elt) IM64.t =
-  let visited = ref IM64.empty in
-  let is_visited x = IM64.mem !visited x in
-  let visit ~data key = visited := IM64.add !visited ~key ~data in
+module G = Graph.Imperative.Digraph.Concrete(Core_kernel.Std.Int64)
 
-  let rec f ~depth v : _ Eliom_content.Html5.D.elt =
+let build roots info g  =
+  let visited = ref Core_kernel.Std.Int64.Map.empty in
+  let is_visited x = Core_kernel.Std.Int64.Map.mem !visited x in
+  let visit ~data key = Core_kernel.Ref.replace visited (Core_kernel.Std.Int64.Map.add ~key ~data) in
+
+  let rec f ~depth (v:int64) : _ Eliom_content.Html5.D.elt =
     if is_visited v then
-      template ~depth ~text:(info v) ~id:v []
+      let (text,maxexp) = info v in
+      template ~depth ~text ~maxexp ~id:v []
     else begin
       visit v ~data:(div []);
       let sons = G.succ g v in
-      let data = template ~depth ~text:(info v) ~id:v (List.map sons ~f:(f ~depth:(depth+1)) ) in
+      let (text,maxexp) = info v in
+      let data = template ~depth ~text ~maxexp ~id:v (List.map (f ~depth:(depth+1)) sons) in
       visit v ~data;
       data
     end
   in
-  IS64.iter roots ~f:(fun x -> f ~depth:0 x |> ignore);
+  Core_kernel.Std.Int64.Set.iter roots ~f:(fun x -> f ~depth:0 x |> ignore);
   !visited
 
 let _ =
+  let open Core_kernel.Std in
   WithDefault.register ~service:view_skills (fun  () () -> Lwt.return (fun _ ->
     let g = G.create () in
-    let roots = ref IS64.empty in
+    let roots = ref Core_kernel.Std.Int64.Set.empty in
 
     lwt skills = Db_user.all_skills () in
-    let map_info = List.fold_left ~init:IM64.empty
+    let map_info = Core_kernel.Std.List.fold_left ~init:Core_kernel.Std.Int64.Map.empty
       ~f:(fun acc x ->
-        Ref.replace roots (fun set -> IS64.add set x#id);
+        Core_kernel.Std.Ref.replace roots (fun set -> Core_kernel.Std.Int64.Set.add set x#id);
         G.add_vertex g x#id;
-        IM64.add acc ~key:x#id ~data:(x#descr)
+        Core_kernel.Std.Int64.Map.add acc ~key:x#id ~data:(x#descr,x#maxexp)
       ) skills
     in
 
@@ -82,24 +87,25 @@ let _ =
     List.iter skill_links ~f:(function
       | (a, Some b) ->
           G.add_edge g b a;
-          Ref.replace roots (fun xs -> IS64.remove xs a)
+          Ref.replace roots (fun xs -> Int64.Set.remove xs a)
       | (a,None) -> ()
     );
     let m = g |> build !roots
-      (fun v ->
-        try IM64.find_exn map_info v
+      (fun (v: int64) ->
+        try Core_kernel.Std.Int64.Map.find_exn map_info v
         with Not_found -> print_endline "PSDA"; raise Not_found) in
 
-    let ans = !roots |> IS64.to_list |> List.map ~f:(fun id ->
-      try IM64.find_exn m id
-      with Not_found  -> template ~depth:0 ~text:("ERROR!!!!") ~id []
+    let ans = !roots |> Core_kernel.Std.Int64.Set.to_list |> List.map ~f:(fun (id: int64) ->
+      try Core_kernel.Std.Int64.Map.find_exn m id
+      with Not_found  -> template ~depth:0 ~maxexp:0l ~text:("ERROR!!!!") ~id []
     ) in
+    let help_string = "Simple tool for adding skills. in tree below you can see all skills that exist in system. First number is id. Title is in the middle. Last is maximum experience" in
     Lwt.return
             (html
                (head (title (pcdata ""))
                   [ css_link ~uri:(make_uri (Eliom_service.static_dir ()) ["admin.css"]) ()
                   ])
-               (body [p [pcdata "skills will be here"];
-                      div ans
-                     ]))
+               (body [p [pcdata help_string]; div ans
+                     ])
+            )
   ))

@@ -55,7 +55,7 @@ open Printf
 
 let search_skill_by_descr text =
     lwt dbh = connect () in
-    let open Core.Std in
+    let open Core_kernel.Std in
     let open Lwt_PGOCaml in
     (* TODO check that text is not SQL injection *)
     let query =
@@ -88,7 +88,7 @@ let search_in_materials where what =
   let f () =
     lwt () = Lwt_PGOCaml.prepare dbh ~query () in
     lwt xs = Lwt_PGOCaml.execute dbh ~params:[] () in
-    Core.Core_list.filter_map xs ~f:(function [a;b;c] -> Some (make  a b c) | _ -> None) |> Lwt.return
+    Core_kernel.Std.List.filter_map xs ~f:(function [a;b;c] -> Some (make  a b c) | _ -> None) |> Lwt.return
   in
   f ()
 

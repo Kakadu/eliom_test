@@ -20,7 +20,7 @@ let friends = (<:table< friends (
   friend_id      bigint NOT NULL
 ) >>)
 
-open Core
+open Core_kernel
 
 let get_user_id_with_name name =
   Db.view_one
@@ -169,7 +169,9 @@ let get_post_by_id id : _ Lwt.t =
 
 
 let select_posts_of_user id : _ list Lwt.t =
-  Db.view <:view< x order by x.date_of_creation desc | x in $posts$; x.user_id = $int64:id$ >>
+  Db.view <:view<
+    x order by x.date_of_creation desc limit 10
+  | x in $posts$; x.user_id = $int64:id$ >>
   >|= (Core_list.map ~f:(fun x ->
                          object
                            method id          = x#!id
@@ -223,21 +225,39 @@ let add_post ~action ~userid ~text ~exp ~material_id =
   } >>)
 
 let skills_id_seq = (<:sequence< bigserial "skills_id_seq" >>)
+let last_inserted_skill_id () : int64 Lwt.t = Db.value (<:value< currval $skills_id_seq$ >>)
 let skills = (<:table< skills (
   id               bigint    NOT NULL DEFAULT(nextval $skills_id_seq$),
   descr            text      NOT NULL,
   maxexp           integer   NOT NULL
 ) >>)
 
+
 let all_skills () =
-  Db.view (<:view< { x.id; x.descr } | x in $skills$ >>)
-  >|= (Core_list.map ~f:(fun o -> object method id = o#!id method descr = o#!descr end))
+  Db.view (<:view< { x.id; x.descr; x.maxexp } | x in $skills$ >>)
+  >|= (Core_list.map ~f:(fun o -> object
+    method id = o#!id
+    method descr = o#!descr
+    method maxexp= o#!maxexp
+  end))
 
 let skills_id_seq = (<:sequence< bigserial "parent_skills_id_seq" >>)
 let parent_skills =  (<:table< parent_skills (
   child_id         bigint    NOT NULL DEFAULT(nextval $skills_id_seq$),
   parent_id        bigint
 ) >>)
+
+let add_skill ~name ~parent_id ~maxexp =
+  lwt () =
+    Db.query (<:insert< $skills$ := {
+      id               = skills?id;
+      descr            = $string:name$;
+      maxexp           = $int32:maxexp$;
+    } >>) in
+  lwt id = last_inserted_skill_id () in
+  lwt () =
+    Db.query (<:insert< $parent_skills$ := { child_id= $int64:id$; parent_id= $int64:parent_id$ }>>)in
+  Lwt.return ()
 
 let get_skill_links () =
   Db.view <:view< x | x in $parent_skills$ >>
@@ -290,7 +310,3 @@ let user_skills_info user_id =
     method text   = o#!descr
     method maxexp = o#!maxexp
   end)
-
-let add_skill ~name ~parent_id =
-  print_endline "adding skill here";
-  Lwt.return ()

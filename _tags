@@ -3,9 +3,8 @@
 true: debug
 #true: verbose
 true: pkg_ocamlgraph
-true: syntax_camlp4o, pkg_core
-#true: pkg_safepass
+true: syntax_camlp4o, pkg_core_kernel
 true: pkg_eliom.server, pkg_pgocaml, pkg_macaque,  pkg_threads, pkg_lwt.syntax
 "Db_user.ml": pkg_macaque.syntax
 "Db.ml": syntax_camlp4o, pkg_macaque.syntax
-#"Admin_tools.ml": cpkg_core
+#"Admin_tools.ml": cpkg_core_kernel

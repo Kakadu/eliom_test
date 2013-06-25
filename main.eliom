@@ -5,8 +5,8 @@ open All_services
 open Db_user
 open Printf
 open Eliom_lib
-open Core
-open Core.Std
+open Core_kernel
+open Std
 open Lwt
 
 external (|>): 'a -> ('a -> 'b) -> 'b = "%revapply"

@@ -83,7 +83,7 @@ val select_posts_of_user2: int64 ->
 
 val add_post: action:string -> userid:int64 -> text: string -> exp:int32 -> material_id:int64 -> unit Lwt.t
 
-val all_skills: unit -> <id: int64; descr: string > list Lwt.t
+val all_skills: unit -> <id: int64; descr: string; maxexp: int32 > list Lwt.t
 val get_skill_links: unit -> (int64*(int64 option)) list Lwt.t
 val find_material: author:string -> title:string  -> int64 option Lwt.t
 val add_material:
@@ -95,4 +95,4 @@ val user_skills_info
   : int64 ->
   < count: int64; sum: int32; skill_id: int64; text: string; maxexp: int32 > list Lwt.t
 
-val add_skill: name:string -> parent_id:int64 -> unit Lwt.t
+val add_skill: name:string -> parent_id:int64 -> maxexp:int32 -> unit Lwt.t

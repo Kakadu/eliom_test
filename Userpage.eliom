@@ -1,6 +1,6 @@
 open Eliom_content.Html5.D
 open Eliom_parameter
-open Core
+open Core_kernel
 open Lwt
 open All_services
 

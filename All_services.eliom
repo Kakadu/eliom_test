@@ -146,6 +146,6 @@ let disconnection_service = Eliom_service.coservice ~fallback:main_service ~get_
 
 let () = WithDefault.Wrap.action_with_redir_register ~service:disconnection_service
   (fun (nick,_) () () ->
-    Eliom_state.discard ~scope:Eliom_common.default_session_scope ();
+    lwt () = Eliom_state.discard ~scope:Eliom_common.default_session_scope () in
     Lwt.return ()
   )
