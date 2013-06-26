@@ -14,7 +14,7 @@ open All_services
 }}
 (* doc about calendar lib: http://calendar.forge.ocamlcore.org/doc/Printer.html *)
 let posts_content o =
-  let date = o#date_of_creation in
+  let date = o#date in
   div [ div ~a:[a_class ["inl-b"; "post-date-placeholder"]]
           [ div [ pcdata (CalendarLib.Printer.Calendar.sprint "%d %b, %Y" date) ]
           ; div [ pcdata (CalendarLib.Printer.Calendar.sprint "%H:%M" date) ]

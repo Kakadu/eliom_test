@@ -74,11 +74,11 @@ val update_user_feeds_per_page :
   unit Lwt.t
 *)
 val select_posts_of_user: int64 ->
-  < comments : string; date_of_creation : Sql_base.timestamp; exp : int32; id : int64; material_id : int64 >
+  < comments : string; date : Sql_base.timestamp; exp : int32; id : int64; material_id : int64 >
          list Lwt.t
 
 val select_posts_of_user2: int64 ->
-  < comments: string; date_of_creation: Sql_base.timestamp; exp: int32; title: string; author: string;
+  < comments: string; date: Sql_base.timestamp; exp: int32; title: string; author: string;
     action: string > list Lwt.t
 
 val add_post: action:string -> userid:int64 -> text: string -> exp:int32 -> material_id:int64 -> unit Lwt.t
@@ -96,3 +96,8 @@ val user_skills_info
   < count: int64; sum: int32; skill_id: int64; text: string; maxexp: int32 > list Lwt.t
 
 val add_skill: name:string -> parent_id:int64 -> maxexp:int32 -> unit Lwt.t
+
+val select_news_for_user: int64 ->
+  < action : string; author : string; comments : string;
+             date : Sql_base.timestamp; exp : int32; title : string >
+  list Lwt.t

@@ -303,7 +303,7 @@ and wizard3_handler area_name area_id () (action,(title,(author, (comment,(exp,m
     (wizard4_handler area_id ~title ~action ~comment ~author ~exp material_id)
   in
   lwt preview_div = Userpage.posts_content (object
-    method date_of_creation = CalendarLib.(Calendar.create (Date.today ()) (Time.now ()) )
+    method date = CalendarLib.(Calendar.create (Date.today ()) (Time.now ()) )
     method comments = comment
     method author   = author
     method title    = title

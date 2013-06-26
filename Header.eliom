@@ -21,6 +21,7 @@ let menu_bar ~home_service  =
     [ a   ~a:[a_class ["menubutton"]] ~service:home_service      [pcdata "Home"] (); br ()
     ; a   ~a:[a_class ["menubutton"]] ~service:myfriends_service [pcdata "My Friends"] (); br()
     ; a   ~a:[a_class ["menubutton"]] ~service:post_wizard       [pcdata "Get new skills"] (); br()
+    ; a   ~a:[a_class ["menubutton"]] ~service:news_service      [pcdata "News feed"] (); br()
     ; div ~a:[a_class ["menubutton"]] [pcdata "Devices"]
     ; div ~a:[a_class ["menubutton"]] [pcdata "Settings"]
     ; div ~a:[a_class ["menubutton"]] [pcdata "Groups"]

@@ -149,3 +149,6 @@ let () = WithDefault.Wrap.action_with_redir_register ~service:disconnection_serv
     lwt () = Eliom_state.discard ~scope:Eliom_common.default_session_scope () in
     Lwt.return ()
   )
+
+let news_service =
+  Eliom_service.service ~path:["news"] ~get_params:Eliom_parameter.unit ()

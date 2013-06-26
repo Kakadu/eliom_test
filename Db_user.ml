@@ -170,7 +170,7 @@ let get_post_by_id id : _ Lwt.t =
 
 let select_posts_of_user id : _ list Lwt.t =
   Db.view <:view<
-    x order by x.date_of_creation desc limit 10
+    x order by x.date_of_creation desc
   | x in $posts$; x.user_id = $int64:id$ >>
   >|= (Core_list.map ~f:(fun x ->
                          object
@@ -178,9 +178,10 @@ let select_posts_of_user id : _ list Lwt.t =
                            method material_id = x#!material_id
                            method exp      = x#!exp
                            method comments = x#!comments
-                           method date_of_creation = x#!date_of_creation
+                           method date     = x#!date_of_creation
                          end)
   )
+
 
 let materials_id_seq = (<:sequence< bigserial "materials_id_seq" >>)
 let last_inserted_material_id (): int64 Lwt.t =
@@ -196,6 +197,22 @@ let materials =  (<:table< materials (
   skill_id         bigint    NOT NULL
 ) >>)
 
+let select_news_for_user (*?offset ?limit*) id =
+  let friends = (<:view< x
+              | x in $users$; y in $friends$; y.user_id = $int64:id$; x.id = y.friend_id >>) in
+
+  Db.view <:view< { p.action_text; p.exp; p.comments; p.date_of_creation; u.nick; m.title; }
+    order by p.date_of_creation desc
+  | p in $posts$; u in $friends$; m in $materials$; p.material_id = m.id; u.id = p.user_id >>
+  >|= (Core_list.map ~f:(fun o -> object
+    method action  = o#!action_text
+    method exp     = o#!exp
+    method comments= o#!comments
+    method date    = o#!date_of_creation
+    method author  = o#!nick
+    method title   = o#!title
+  end))
+
 let select_posts_of_user2 id : _ list Lwt.t =
   Db.view <:view<
     { x.action_text; x.exp; x.comments; x.date_of_creation; y.title; y.author }
@@ -205,7 +222,7 @@ let select_posts_of_user2 id : _ list Lwt.t =
                          object
                            method exp      = x#!exp
                            method comments = x#!comments
-                           method date_of_creation = x#!date_of_creation
+                           method date     = x#!date_of_creation
                            method title    = x#!title
                            method author   = x#!author
                            method action   = x#!action_text
